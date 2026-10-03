@@ -3,6 +3,7 @@ package helpdesk.backend.services;
 import helpdesk.backend.dtos.AuthResponse;
 import helpdesk.backend.dtos.LoginRequest;
 import helpdesk.backend.dtos.RegisterRequest;
+import helpdesk.backend.dtos.Verify2faRequest;
 import helpdesk.backend.entities.Rol;
 import helpdesk.backend.entities.Usuario;
 import helpdesk.backend.repositories.RolRepository;
@@ -15,6 +16,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Random;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -25,44 +28,78 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
+    private final EmailService emailService; // Inyectamos el servicio de correos
 
     public AuthResponse register(RegisterRequest request) {
-        // Regla de negocio: Si es correo UTP, es Admin. Si no, es Usuario normal.
         String nombreRol = request.getCorreo().endsWith("@utp.edu.pe") ? "Admin" : "Usuario";
-
         Rol rol = rolRepository.findByNombre(nombreRol)
-                .orElseThrow(() -> new RuntimeException("Error: Rol no encontrado en la base de datos."));
+                .orElseThrow(() -> new RuntimeException("Error: Rol no encontrado."));
 
-        // Creamos el usuario y encriptamos su contraseña
         Usuario usuario = new Usuario();
         usuario.setNombre(request.getNombre());
         usuario.setCorreo(request.getCorreo());
-        usuario.setPasswordHash(passwordEncoder.encode(request.getPassword())); 
+        usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        usuario.setDni(request.getDni());
+        usuario.setCargo(request.getCargo());
+        usuario.setCelular(request.getCelular());
+        usuario.setArea(request.getArea());
         usuario.setRol(rol);
 
         usuarioRepository.save(usuario);
 
-        // Generamos el token JWT para que inicie sesión automáticamente al registrarse
         var userDetails = userDetailsService.loadUserByUsername(usuario.getCorreo());
         String jwtToken = jwtService.generateToken(userDetails);
-
+        
         AuthResponse authResponse = new AuthResponse();
         authResponse.setToken(jwtToken);
         return authResponse;
     }
 
     public AuthResponse login(LoginRequest request) {
-        // Spring Security valida automáticamente que el correo y la contraseña (desencriptada) coincidan
+        // 1. Validamos credenciales (si la contraseña está mal, lanza error automáticamente)
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getCorreo(), request.getPassword())
         );
 
-        // Si la autenticación es exitosa, generamos el token
-        var userDetails = userDetailsService.loadUserByUsername(request.getCorreo());
-        String jwtToken = jwtService.generateToken(userDetails);
+        Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        // 2. Generamos un código de 6 dígitos aleatorio
+        String codigoGenerado = String.format("%06d", new Random().nextInt(999999));
+        
+        // 3. Lo guardamos en la base de datos
+        usuario.setCodigo2fa(codigoGenerado);
+        usuarioRepository.save(usuario);
+
+        // 4. Lo enviamos por correo
+        emailService.enviarCorreo2FA(usuario.getCorreo(), codigoGenerado);
+
+        // 5. Retornamos un mensaje de aviso en lugar del token real
         AuthResponse authResponse = new AuthResponse();
-        authResponse.setToken(jwtToken);
+        authResponse.setToken("REQUIERE_2FA"); 
         return authResponse;
+    }
+
+    public AuthResponse verify2fa(Verify2faRequest request) {
+        Usuario usuario = usuarioRepository.findByCorreo(request.getCorreo())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Verificamos que el código coincida
+        if (usuario.getCodigo2fa() != null && usuario.getCodigo2fa().equals(request.getCodigo())) {
+            
+            // Limpiamos el código para que no se pueda reusar
+            usuario.setCodigo2fa(null);
+            usuarioRepository.save(usuario);
+
+            // Generamos el token final
+            var userDetails = userDetailsService.loadUserByUsername(usuario.getCorreo());
+            String jwtToken = jwtService.generateToken(userDetails);
+
+            AuthResponse authResponse = new AuthResponse();
+            authResponse.setToken(jwtToken);
+            return authResponse;
+        } else {
+            throw new RuntimeException("Código incorrecto o expirado");
+        }
     }
 }
