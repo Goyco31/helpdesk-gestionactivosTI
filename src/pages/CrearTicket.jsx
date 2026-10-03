@@ -1,26 +1,32 @@
 import { useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import './CrearTicket.css'
 
 const categorias = ['Equipos', 'Aplicaciones', 'Redes']
+const prioridades = ['Baja', 'Media', 'Alta']
+const MAX_DESCRIPCION = 500
 
 function CrearTicket() {
-  const { state } = useLocation()
+  const { usuario, rol } = useOutletContext()
   const navigate = useNavigate()
-  const usuario = state?.usuario || 'usuario@terpel.com'
-  const rol = state?.rol || 'Usuario Final'
 
-  const [categoria, setCategoria] = useState('')
+  const [categoria, setCategoria] = useState(categorias[0])
+  const [prioridad, setPrioridad] = useState('Media')
+  const [asunto, setAsunto] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [enviado, setEnviado] = useState(false)
   const [idTicket, setIdTicket] = useState(null)
 
-  const faltaCategoria = categoria === ''
-  const faltaDescripcion = descripcion.trim() === ''
+  function limpiar() {
+    setCategoria(categorias[0])
+    setPrioridad('Media')
+    setAsunto('')
+    setDescripcion('')
+  }
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (faltaCategoria || faltaDescripcion) return
+    if (!asunto.trim() || !descripcion.trim()) return
     // Mientras no hay backend, simulamos la creación del ticket.
     // Más adelante esto será un POST a /api/tickets con axios.
     const nuevoId = Math.floor(1000 + Math.random() * 9000)
@@ -28,96 +34,95 @@ function CrearTicket() {
     setEnviado(true)
   }
 
-  function volverAlDashboard() {
-    navigate('/dashboard', { state: { usuario, rol } })
+  function volverAMisSolicitudes() {
+    navigate('/usuario/mis-solicitudes', { state: { usuario, rol } })
   }
 
   if (enviado) {
     return (
-      <div className="ticket-page">
-        <div className="ticket-confirm-card">
-          <div className="ticket-check">✓</div>
+      <div className="ct-wrap">
+        <div className="ct-confirm-card">
+          <div className="ct-check">✓</div>
           <h1>Ticket creado</h1>
           <p>
             Tu solicitud quedó registrada con el número{' '}
             <strong>#{idTicket}</strong> y estado <strong>Abierto</strong>.
             El área de soporte la revisará pronto.
           </p>
-          <button onClick={volverAlDashboard}>Volver al inicio</button>
+          <button onClick={volverAMisSolicitudes}>Volver a mis solicitudes</button>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="ticket-page">
-      <form className="ticket-container" onSubmit={handleSubmit}>
-        <div className="ticket-main">
-          <button type="button" className="ticket-volver" onClick={volverAlDashboard}>← Volver</button>
+    <div className="ct-wrap">
+      <div className="ct-eyebrow">Mesa de ayuda</div>
+      <h1>Crear un nuevo ticket</h1>
+      <p className="ct-subtitle">Cuéntanos qué necesitas y el equipo de soporte te ayudará.</p>
 
-          <div className="ticket-titulo-row">
-            <h1>Reportar un problema técnico</h1>
-          </div>
-          <p className="ticket-lead">
-            Usa este formulario para reportar incidencias de equipos, aplicaciones o redes.
-          </p>
-
-          <div className="ticket-divider" />
-
-          <div className="ticket-info-box">
-            <p>
-              Utiliza este formulario para reportar incidentes técnicos relacionados
-              con equipos, aplicaciones o redes: errores del sistema, mal
-              funcionamiento de aplicativos, fallas de dispositivos o problemas de
-              conectividad.
-            </p>
-            <p>
-              Entre más detalle brindes (equipo afectado, mensaje de error, pasos
-              realizados), más rápido podrá resolverlo el equipo de soporte.
-            </p>
+      <div className="ct-layout">
+        <form className="ct-form-card" onSubmit={handleSubmit}>
+          <div className="ct-row">
+            <label>
+              Categoría
+              <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+                {categorias.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+            <label>
+              Prioridad
+              <select value={prioridad} onChange={(e) => setPrioridad(e.target.value)}>
+                {prioridades.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </label>
           </div>
 
-          <div className="ticket-field">
-            <label>¿Quién reporta el problema? <span className="req">*</span></label>
-            <div className="ticket-user-input">
-              <span className="ticket-user-avatar">👤</span>
-              <input type="text" value={usuario} readOnly />
-            </div>
-          </div>
+          <label>
+            Asunto
+            <input
+              type="text"
+              placeholder="Ej. No puedo acceder a mi correo"
+              value={asunto}
+              onChange={(e) => setAsunto(e.target.value)}
+              required
+            />
+          </label>
 
-          <div className="ticket-field">
-            <label>Seleccione una categoría <span className="req">*</span></label>
-            <div className="ticket-radio-group">
-              {categorias.map((c) => (
-                <label key={c} className="ticket-radio">
-                  <input
-                    type="radio"
-                    name="categoria"
-                    value={c}
-                    checked={categoria === c}
-                    onChange={(e) => setCategoria(e.target.value)}
-                  />
-                  {c}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="ticket-field">
-            <label>Describa su problema en detalle <span className="req">*</span></label>
+          <label>
+            Descripción
             <textarea
               rows={5}
-              placeholder="Por ejemplo: el equipo no enciende, el aplicativo marca error al iniciar sesión, no tengo acceso a la red del piso 3..."
+              maxLength={MAX_DESCRIPCION}
+              placeholder="Describe el problema, cuándo comenzó y cualquier mensaje de error que hayas visto."
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
+              required
             />
-          </div>
-        </div>
+            <div className="ct-counter">{descripcion.length}/{MAX_DESCRIPCION}</div>
+          </label>
 
-        <aside className="ticket-sidebar">
-          <button type="submit" className="ticket-enviar">Enviar</button>
+          <div className="ct-divider" />
+
+          <div className="ct-actions">
+            <button type="button" className="ct-limpiar" onClick={limpiar}>Limpiar</button>
+            <button type="submit" className="ct-enviar">Enviar ticket</button>
+          </div>
+        </form>
+
+        <aside className="ct-tips">
+          <div className="ct-tips-icon">?</div>
+          <h4>Antes de enviar</h4>
+          <ul>
+            <li>Incluye el mensaje de error exacto, si existe.</li>
+            <li>Indica el equipo o aplicación afectada.</li>
+            <li>Evita compartir contraseñas o información sensible.</li>
+          </ul>
+          <div className="ct-tips-divider" />
+          <strong className="ct-horario-titulo">Atención de soporte</strong>
+          <p className="ct-horario-texto">Lunes a viernes, 8:00 a 18:00</p>
         </aside>
-      </form>
+      </div>
     </div>
   )
 }

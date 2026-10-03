@@ -21,8 +21,11 @@ function Login() {
   function handleSubmit(e) {
     e.preventDefault()
     const rol = determinarRolDePrueba(usuario)
-    // Pasamos el usuario y el rol simulado al Dashboard
-    navigate('/dashboard', { state: { usuario, rol } })
+    if (rol === 'Usuario Final') {
+      navigate('/usuario/mis-solicitudes', { state: { usuario, rol } })
+    } else {
+      navigate('/dashboard', { state: { usuario, rol } })
+    }
   }
 
   return (

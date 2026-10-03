@@ -1,0 +1,320 @@
+.fa-wrap {
+  font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+  max-width: 1080px;
+}
+
+.fa-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.fa-header h1 {
+  margin: 0 0 4px;
+  font-size: 21px;
+  color: #1a1a18;
+}
+
+.fa-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  max-width: 440px;
+}
+
+.fa-pendientes-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.fa-pendientes-num {
+  display: block;
+  color: #e3192d;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.fa-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.fa-lista h4 {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.fa-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.fa-item.active {
+  border-color: #e3192d;
+  box-shadow: 0 0 0 1px #e3192d;
+}
+
+.fa-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.fa-item-id {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #1a1a18;
+}
+
+.fa-item-tipo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a18;
+  margin-bottom: 2px;
+}
+
+.fa-item-activo {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.fa-item-fecha {
+  font-size: 11.5px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.fa-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.badge-pendiente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-firmada {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.fa-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fa-detalle-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.fa-detalle-eyebrow {
+  display: block;
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 2px;
+}
+
+.fa-detalle-head h2 {
+  margin: 0;
+  font-size: 17px;
+  color: #1a1a18;
+}
+
+.fa-documento {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.fa-doc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #f1f2f4;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+}
+
+.fa-doc-marca {
+  color: #e3192d;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.fa-doc-meta {
+  text-align: right;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.fa-documento h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: #1a1a18;
+  text-transform: uppercase;
+}
+
+.fa-doc-texto {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+.fa-doc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.fa-doc-grid div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fa-doc-grid span {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.fa-doc-grid strong {
+  font-size: 13.5px;
+  color: #1a1a18;
+}
+
+.fa-doc-obs span {
+  display: block;
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 3px;
+}
+
+.fa-doc-obs p {
+  margin: 0;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.fa-firma-box {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 22px;
+}
+
+.fa-firma-box h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: #1a1a18;
+}
+
+.fa-firma-box > p {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  color: #6b7280;
+}
+
+.fa-firma-box input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-style: italic;
+  font-size: 14px;
+  padding: 11px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  outline: none;
+  margin-bottom: 14px;
+}
+
+.fa-firma-box input[type="text"]:focus {
+  border-color: #e3192d;
+  font-style: normal;
+}
+
+.fa-checkbox {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #374151;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.fa-checkbox input {
+  margin-top: 2px;
+  accent-color: #e3192d;
+}
+
+.fa-firma-box button {
+  width: 100%;
+  background: #e3192d;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fa-firma-box button:disabled {
+  background: #f3a9b2;
+  cursor: not-allowed;
+}
+
+.fa-firma-box button:not(:disabled):hover {
+  background: #c21425;
+}
+
+.fa-ya-firmada {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  border-radius: 10px;
+  padding: 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .fa-layout {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,160 @@
+.mt-wrap {
+  max-width: 1040px;
+}
+
+.mt-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.mt-header h1 {
+  margin: 0 0 4px;
+  font-size: 21px;
+  color: #1a1a18;
+}
+
+.mt-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.mt-nuevo {
+  background: #e3192d;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mt-nuevo:hover {
+  background: #c21425;
+}
+
+.mt-filtros {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.mt-filtro {
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mt-filtro.active {
+  background: #e3192d;
+  border-color: #e3192d;
+  color: white;
+}
+
+.mt-count {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.mt-filtro:not(.active) .mt-count {
+  background: #f3f5f8;
+  color: #374151;
+}
+
+.mt-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.mt-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mt-table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  text-transform: uppercase;
+  padding: 12px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mt-table td {
+  padding: 14px 20px;
+  font-size: 13.5px;
+  color: #374151;
+  border-bottom: 1px solid #f1f2f4;
+}
+
+.mt-table tr:last-child td {
+  border-bottom: none;
+}
+
+.mt-id {
+  font-weight: 600;
+  color: #1a1a18;
+}
+
+.mt-tag {
+  display: inline-block;
+  border: 1px solid #c7d7ea;
+  color: #2f6fb0;
+  background: #f3f8fe;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.mt-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.estado-proceso {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.estado-resuelto {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.estado-cerrado {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.estado-abierto {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.mt-vacio {
+  text-align: center;
+  color: #9ca3af;
+  padding: 24px;
+}
