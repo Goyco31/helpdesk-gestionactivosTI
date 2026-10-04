@@ -26,7 +26,7 @@ function Login() {
     } else if (rol === 'Administrador') {
       navigate('/administrador/registrar-usuario', { state: { usuario, rol } })
     } else {
-      navigate('/dashboard', { state: { usuario, rol } })
+      navigate('/soporte/gestionar-ticket', { state: { usuario, rol } })
     }
   }
 

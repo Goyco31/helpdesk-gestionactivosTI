@@ -17,7 +17,6 @@ const navSections = [
       { to: 'asignar-activo', label: 'Asignar activo', icon: '→' },
       { to: 'registrar-devolucion', label: 'Registrar devolución', icon: '↩' },
       { to: 'generar-acta', label: 'Generar acta', icon: '▦' },
-      { to: 'enviar-acta', label: 'Enviar acta firmada', icon: '↑' },
       { to: 'registrar-activo', label: 'Registrar activo', icon: '+' },
       { to: 'editar-activo', label: 'Editar / dar de baja', icon: '✎' },
       { to: 'consultar-inventario', label: 'Consultar inventario', icon: '▤' },

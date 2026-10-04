@@ -1,0 +1,98 @@
+.rac-wrap {
+  font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+  max-width: 520px;
+}
+
+.rac-wrap h1 {
+  margin: 0 0 6px;
+  font-size: 21px;
+  color: #1a1a18;
+}
+
+.rac-subtitle {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.rac-subtitle strong {
+  color: #2f6fb0;
+}
+
+.rac-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.rac-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.rac-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #4b5563;
+}
+
+.rac-card input,
+.rac-card select {
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  outline: none;
+  color: #1a1a18;
+}
+
+.rac-card input:focus,
+.rac-card select:focus {
+  border-color: #e3192d;
+}
+
+.rac-estado-inicial {
+  font-size: 12.5px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rac-badge {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.rac-card button {
+  background: #e3192d;
+  color: white;
+  border: none;
+  padding: 13px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rac-card button:hover {
+  background: #c21425;
+}
