@@ -23,6 +23,8 @@ function Login() {
     const rol = determinarRolDePrueba(usuario)
     if (rol === 'Usuario Final') {
       navigate('/usuario/mis-solicitudes', { state: { usuario, rol } })
+    } else if (rol === 'Administrador') {
+      navigate('/administrador/registrar-usuario', { state: { usuario, rol } })
     } else {
       navigate('/dashboard', { state: { usuario, rol } })
     }
