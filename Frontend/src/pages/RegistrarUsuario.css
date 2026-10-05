@@ -1,0 +1,145 @@
+.ru-wrap {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    max-width: 1040px;
+  }
+  
+  .ru-eyebrow {
+    color: #e3192d;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  
+  .ru-wrap h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    color: #1a1a18;
+  }
+  
+  .ru-subtitle {
+    margin: 0 0 20px;
+    font-size: 13.5px;
+    color: #2f6fb0;
+  }
+  
+  .ru-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 20px;
+    align-items: start;
+  }
+  
+  .ru-form-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  
+  .ru-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  .ru-form-card label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #4b5563;
+  }
+  
+  .ru-form-card input,
+  .ru-form-card select {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    outline: none;
+    color: #1a1a18;
+  }
+  
+  .ru-form-card input:focus,
+  .ru-form-card select:focus {
+    border-color: #e3192d;
+  }
+  
+  .ru-form-card button {
+    margin-top: 4px;
+    background: #e3192d;
+    color: white;
+    border: none;
+    padding: 13px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  
+  .ru-form-card button:hover {
+    background: #c21425;
+  }
+  
+  .ru-info {
+    background: #14161d;
+    border-radius: 10px;
+    padding: 22px;
+    color: #d1d5db;
+  }
+  
+  .ru-info-eyebrow {
+    color: #ff6b7a;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  
+  .ru-info h4 {
+    color: white;
+    margin: 0 0 10px;
+    font-size: 15.5px;
+  }
+  
+  .ru-info > p {
+    font-size: 12.5px;
+    line-height: 1.6;
+    margin: 0;
+    color: #9ca3af;
+  }
+  
+  .ru-info-divider {
+    border-top: 1px solid #2d303a;
+    margin: 16px 0;
+  }
+  
+  .ru-info-point {
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 0 0 10px;
+    color: #93c5fd;
+  }
+  
+  .ru-info-point:last-child {
+    margin-bottom: 0;
+  }
+  
+  @media (max-width: 760px) {
+    .ru-layout {
+      grid-template-columns: 1fr;
+    }
+  }
