@@ -27,7 +27,13 @@ public class AuthController {
     }
 
     @PostMapping("/verify-2fa")
-    public ResponseEntity<AuthResponse> verify2fa(@RequestBody Verify2faRequest request) {
-        return ResponseEntity.ok(authService.verify2fa(request));
+    public ResponseEntity<?> verify2fa(@RequestBody Verify2faRequest request) {
+        try {
+            // Si el código es correcto, devuelve el token (Status 200)
+            return ResponseEntity.ok(authService.verify2fa(request));
+        } catch (RuntimeException e) {
+            // Si el código es incorrecto, atrapamos el error y devolvemos un Status 400
+            return ResponseEntity.status(400).body("Fallo de verificación: " + e.getMessage());
+        }
     }
 }

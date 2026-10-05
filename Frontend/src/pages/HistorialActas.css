@@ -1,0 +1,125 @@
+.ha-wrap {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    max-width: 1040px;
+  }
+  
+  .ha-wrap h1 {
+    margin: 0 0 6px;
+    font-size: 21px;
+    color: #1a1a18;
+  }
+  
+  .ha-subtitle {
+    margin: 0 0 18px;
+    font-size: 13px;
+    color: #6b7280;
+  }
+  
+  .ha-subtitle strong {
+    color: #2f6fb0;
+  }
+  
+  .ha-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  
+  .ha-filtros {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .ha-filtro {
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  
+  .ha-filtro.active {
+    background: #e3192d;
+    border-color: #e3192d;
+    color: white;
+  }
+  
+  .ha-toolbar input {
+    font-family: inherit;
+    font-size: 12.5px;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    outline: none;
+    width: 260px;
+  }
+  
+  .ha-toolbar input:focus {
+    border-color: #e3192d;
+  }
+  
+  .ha-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .ha-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .ha-table th {
+    text-align: left;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #6b7280;
+    padding: 12px 20px;
+    background: #fafafa;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .ha-table td {
+    padding: 14px 20px;
+    font-size: 13.5px;
+    color: #374151;
+    border-bottom: 1px solid #f1f2f4;
+  }
+  
+  .ha-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .ha-acta {
+    font-weight: 600;
+    color: #1a1a18;
+  }
+  
+  .ha-badge {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+  }
+  
+  .tipo-asignación { background: #dbeafe; color: #1d4ed8; }
+  .tipo-devolución { background: #fce7f3; color: #a21caf; }
+  
+  .ha-fecha {
+    color: #9ca3af;
+    font-size: 12.5px;
+  }
+  
+  .ha-vacio {
+    text-align: center;
+    color: #9ca3af;
+    padding: 20px;
+  }

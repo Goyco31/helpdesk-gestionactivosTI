@@ -97,6 +97,8 @@ public class AuthService {
 
             AuthResponse authResponse = new AuthResponse();
             authResponse.setToken(jwtToken);
+            authResponse.setRole(usuario.getRol().getNombre()); 
+            authResponse.setUsername(usuario.getNombre());
             return authResponse;
         } else {
             throw new RuntimeException("Código incorrecto o expirado");
