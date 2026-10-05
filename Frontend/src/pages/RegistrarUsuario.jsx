@@ -1,24 +1,58 @@
 import { useState } from 'react'
+import axios from 'axios'
 import './RegistrarUsuario.css'
 
-const sedes = ['Lima Central', 'Callao', 'Arequipa', 'Trujillo']
-const roles = ['Usuario', 'Soporte', 'Administrador']
-
 function RegistrarUsuario() {
-  const [nombre, setNombre] = useState('')
-  const [correo, setCorreo] = useState('')
-  const [documento, setDocumento] = useState('')
-  const [sede, setSede] = useState(sedes[0])
-  const [rolInicial, setRolInicial] = useState(roles[0])
+  const [formData, setFormData] = useState({
+    nombre: '',
+    correo: '',
+    password: '',
+    dni: '',
+    cargo: '',
+    celular: '',
+    area: 'Lima Central' // Valor por defecto para el área/sede
+  })
   const [creado, setCreado] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e) {
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault()
-    if (!nombre.trim() || !correo.trim()) return
-    // Mientras no hay backend, simulamos la creación del usuario.
-    // Más adelante esto será un POST a /api/usuarios con axios.
-    setCreado(true)
-    setTimeout(() => setCreado(false), 2500)
+    if (!formData.nombre.trim() || !formData.correo.trim()) return
+
+    setLoading(true)
+    try {
+      const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/auth/register`
+      
+      // Enviamos el objeto que coincide exactamente con RegisterRequest del backend
+      await axios.post(url, formData)
+
+      setCreado(true)
+      
+      // Limpiar formulario tras éxito
+      setFormData({
+        nombre: '',
+        correo: '',
+        password: '',
+        dni: '',
+        cargo: '',
+        celular: '',
+        area: 'Lima Central'
+      })
+
+      setTimeout(() => setCreado(false), 3000)
+    } catch (error) {
+      console.error("Error al registrar el usuario:", error)
+      alert("Hubo un error al registrar el usuario en el servidor. Verifica los datos o si el correo ya existe.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -33,9 +67,10 @@ function RegistrarUsuario() {
             Nombre completo
             <input
               type="text"
+              name="nombre"
               placeholder="Ej. Laura Martínez"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
+              value={formData.nombre}
+              onChange={handleChange}
               required
             />
           </label>
@@ -45,51 +80,87 @@ function RegistrarUsuario() {
               Correo corporativo
               <input
                 type="email"
+                name="correo"
                 placeholder="usuario@terpel.com"
-                value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
+                value={formData.correo}
+                onChange={handleChange}
                 required
               />
             </label>
             <label>
-              Documento
+              Documento (DNI)
               <input
                 type="text"
+                name="dni"
                 placeholder="Número de documento"
-                value={documento}
-                onChange={(e) => setDocumento(e.target.value)}
+                value={formData.dni}
+                onChange={handleChange}
+                required
               />
             </label>
           </div>
 
           <div className="ru-row">
             <label>
-              Sede
-              <select value={sede} onChange={(e) => setSede(e.target.value)}>
-                {sedes.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              Contraseña temporal
+              <input
+                type="password"
+                name="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
             </label>
             <label>
-              Rol inicial
-              <select value={rolInicial} onChange={(e) => setRolInicial(e.target.value)}>
-                {roles.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
+              Celular
+              <input
+                type="text"
+                name="celular"
+                placeholder="Número de celular"
+                value={formData.celular}
+                onChange={handleChange}
+                required
+              />
             </label>
           </div>
 
-          <button type="submit">{creado ? 'Usuario creado ✓' : 'Crear usuario'}</button>
+          <div className="ru-row">
+            <label>
+              Área / Sede
+              <select name="area" value={formData.area} onChange={handleChange}>
+                <option value="Lima Central">Oficna San Isidro</option>
+                <option value="Callao">Planta Callao</option>
+              </select>
+            </label>
+            <label>
+              Cargo
+              <input
+                type="text"
+                name="cargo"
+                placeholder="Ej. Analista de Soporte"
+                value={formData.cargo}
+                onChange={handleChange}
+                required
+              />
+            </label>
+          </div>
+
+          <button type="submit" disabled={loading}>
+            {loading ? 'Guardando...' : creado ? 'Usuario creado ✓' : 'Crear usuario'}
+          </button>
         </form>
 
         <aside className="ru-info">
           <div className="ru-info-eyebrow">Acceso seguro</div>
           <h4>Activación de cuenta</h4>
           <p>
-            El nuevo usuario recibirá un correo para establecer su contraseña
-            y validar la cuenta corporativa.
+            El nuevo usuario recibirá sus credenciales corporativas
+            y validará su cuenta en el sistema.
           </p>
           <div className="ru-info-divider" />
-          <p className="ru-info-point">La contraseña no es visible para el administrador.</p>
-          <p className="ru-info-point">Los permisos dependen del rol seleccionado.</p>
+          <p className="ru-info-point">La contraseña temporal se asigna de forma segura.</p>
+          <p className="ru-info-point">Los permisos dependen del cargo y rol asignado.</p>
           <p className="ru-info-point">Todos los cambios quedan registrados.</p>
         </aside>
       </div>

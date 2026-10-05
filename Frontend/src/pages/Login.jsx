@@ -36,33 +36,41 @@ function Login() {
   // Segundo paso: Validar código 2FA, recibir el token y redirigir según el rol
   async function handleVerify2FA(e) {
     e.preventDefault()
+    console.log("1. Enviando código 2FA al backend...");
+    
     try {
       const url = `${import.meta.env.VITE_API_URL}/api/auth/verify-2fa`
+      console.log("URL llamada:", url);
+
       const response = await axios.post(url, {
         correo: usuario,
         codigo: codigo2FA 
       })
 
+      console.log("2. ¡Respuesta recibida del backend!", response.data);
+
       const rolDelUsuario = response.data.role || 'Usuario Final'
       const nombreUsuario = response.data.username || usuario
       const tokenJWT = response.data.token
 
-      // Guardamos el token en el localStorage por seguridad y peticiones futuras
+      console.log("Rol detectado:", rolDelUsuario);
+      console.log("Usuario detectado:", nombreUsuario);
+
       localStorage.setItem('token', tokenJWT)
 
-      // Redirección inteligente según el rol que nos mandó el backend
       if (rolDelUsuario === 'Usuario Final') {
+        console.log("Redirigiendo a /usuario/mis-solicitudes...");
         navigate('/usuario/mis-solicitudes', { state: { usuario: nombreUsuario, rol: rolDelUsuario } })
       } else {
+        console.log("Redirigiendo a /dashboard...");
         navigate('/dashboard', { state: { usuario: nombreUsuario, rol: rolDelUsuario } })
       }
 
     } catch (error) {
-      console.error("Error en verificación 2FA:", error)
+      console.error("❌ Error atrapado en el catch del 2FA:", error)
       alert("El código ingresado es incorrecto o ha expirado.")
-    }
-  }
-
+      }
+    } 
   return (
     <div className="login-page">
       <div className="login-card">

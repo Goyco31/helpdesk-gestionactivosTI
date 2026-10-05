@@ -34,6 +34,7 @@ const menuPorRol = {
   'Usuario Final': opcionesUsuario,
   'Soporte TI': opcionesSoporte,
   'Administrador': [...opcionesAdministrador, ...opcionesSoporte],
+  'Admin': [...opcionesAdministrador, ...opcionesSoporte],
 }
 
 function Dashboard() {
@@ -51,9 +52,20 @@ function Dashboard() {
   const opciones = menuPorRol[rol] || opcionesUsuario
 
   // Pantallas ya construidas: mapeamos el título de la tarjeta a su ruta.
+  // Pantallas ya construidas: mapeamos el título de la tarjeta a su ruta corporativa.
   const rutasListas = {
-    'Crear ticket': '/crear-ticket',
-    'Registrar usuario': '/registrar-usuario', // <--- NUEVA LÍNEA AÑADIDA
+    'Registrar usuario': '/administrador/registrar-usuario',
+    'Gestionar roles y permisos': '/administrador/gestionar-roles',
+    'Consultar reportes de inventario': '/administrador/reportes-inventario',
+    'Gestionar tickets': '/administrador/gestionar-ticket',
+    'Asignar activo a usuario': '/administrador/asignar-activo',
+    'Registrar devolución de activo': '/administrador/registrar-devolucion',
+    'Generar acta de asignación/devolución': '/administrador/generar-acta',
+    'Enviar acta firmada': '/administrador/enviar-acta',
+    'Registrar activo': '/administrador/registrar-activo',
+    'Editar / dar de baja activo': '/administrador/editar-activo',
+    'Consultar inventario': '/administrador/consultar-inventario',
+    'Consultar historial de actas': '/administrador/historial-actas',
   }
 
   function abrirOpcion(titulo) {
