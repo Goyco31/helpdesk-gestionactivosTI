@@ -2,12 +2,13 @@ import { Outlet, useLocation, useNavigate, NavLink } from 'react-router-dom'
 import './UsuarioLayout.css'
 
 const navItems = [
+  { to: 'inicio', label: 'Inicio', icon: '⌂' },
   { to: 'mis-solicitudes', label: 'Mis solicitudes', icon: '▤' },
-  { to: 'crear-ticket', label: 'Crear ticket', icon: '+' },
   { to: 'firmar-acta', label: 'Firmar acta', icon: '✓' },
 ]
 
 const breadcrumbPorRuta = {
+  'inicio': 'Inicio',
   'mis-solicitudes': 'Mis Solicitudes',
   'crear-ticket': 'Crear Ticket',
   'firmar-acta': 'Firmar Acta',
@@ -22,7 +23,7 @@ function UsuarioLayout() {
   const nombre = usuario.split('@')[0].replace(/[._]/g, ' ')
   const nombreCapital = nombre.replace(/\b\w/g, (l) => l.toUpperCase())
   const seccionActual = pathname.split('/').pop()
-  const breadcrumb = breadcrumbPorRuta[seccionActual] || 'Mis Solicitudes'
+  const breadcrumb = breadcrumbPorRuta[seccionActual] || 'Inicio'
 
   function cerrarSesion() {
     navigate('/', { replace: true })
@@ -34,7 +35,7 @@ function UsuarioLayout() {
         <div className="ul-brand">
           <div className="ul-logo">TI</div>
           <div>
-            <div className="ul-brand-title">HOLA {nombreCapital.split(' ')[0].toUpperCase()}</div>
+            <div className="ul-brand-title">HOLA {nombreCapital.toUpperCase()}</div>
             <div className="ul-brand-sub">Bienvenido a Terpel</div>
           </div>
         </div>
@@ -52,14 +53,6 @@ function UsuarioLayout() {
             </NavLink>
           ))}
         </nav>
-
-        <div className="ul-user">
-          <div className="ul-avatar">{nombreCapital.slice(0, 2).toUpperCase()}</div>
-          <div>
-            <div className="ul-user-name">{nombreCapital}</div>
-            <div className="ul-user-rol">Usuario</div>
-          </div>
-        </div>
       </aside>
 
       <div className="ul-main">

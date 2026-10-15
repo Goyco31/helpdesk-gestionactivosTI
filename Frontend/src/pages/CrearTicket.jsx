@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import './CrearTicket.css'
 
-const categorias = ['Equipos', 'Aplicaciones', 'Redes']
+const subcategorias = {
+  Hardware: ['Computadora', 'Monitor', 'Impresora', 'Periféricos', 'Red / Conectividad'],
+  Software: ['Aplicación corporativa', 'Correo electrónico', 'Accesos y credenciales', 'Sistema operativo', 'Otro'],
+}
+const metodosContacto = ['Correo corporativo', 'Teléfono', 'Microsoft Teams']
 const prioridades = ['Baja', 'Media', 'Alta']
 const MAX_DESCRIPCION = 500
 
@@ -10,25 +14,40 @@ function CrearTicket() {
   const { usuario, rol } = useOutletContext()
   const navigate = useNavigate()
 
-  const [categoria, setCategoria] = useState(categorias[0])
+  const [categoria, setCategoria] = useState('Hardware')
+  const [subcategoria, setSubcategoria] = useState(subcategorias.Hardware[0])
+  const [metodo, setMetodo] = useState(metodosContacto[0])
   const [prioridad, setPrioridad] = useState('Media')
   const [asunto, setAsunto] = useState('')
   const [descripcion, setDescripcion] = useState('')
+  const [imagen, setImagen] = useState(null)
   const [enviado, setEnviado] = useState(false)
   const [idTicket, setIdTicket] = useState(null)
 
+  function elegirCategoria(c) {
+    setCategoria(c)
+    setSubcategoria(subcategorias[c][0])
+  }
+
   function limpiar() {
-    setCategoria(categorias[0])
+    elegirCategoria('Hardware')
+    setMetodo(metodosContacto[0])
     setPrioridad('Media')
     setAsunto('')
     setDescripcion('')
+    setImagen(null)
+  }
+
+  function handleImagen(e) {
+    const file = e.target.files?.[0]
+    if (file) setImagen(file.name)
   }
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!asunto.trim() || !descripcion.trim()) return
     // Mientras no hay backend, simulamos la creación del ticket.
-    // Más adelante esto será un POST a /api/tickets con axios.
+    // Más adelante esto será un POST a /api/tickets con axios (multipart si hay imagen).
     const nuevoId = Math.floor(1000 + Math.random() * 9000)
     setIdTicket(nuevoId)
     setEnviado(true)
@@ -64,10 +83,34 @@ function CrearTicket() {
       <div className="ct-layout">
         <form className="ct-form-card" onSubmit={handleSubmit}>
           <div className="ct-row">
+            <div className="ct-campo">
+              <span className="ct-label">Categoría</span>
+              <div className="ct-toggle">
+                {['Hardware', 'Software'].map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={categoria === c ? 'active' : ''}
+                    onClick={() => elegirCategoria(c)}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
             <label>
-              Categoría
-              <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-                {categorias.map((c) => <option key={c} value={c}>{c}</option>)}
+              Subcategoría
+              <select value={subcategoria} onChange={(e) => setSubcategoria(e.target.value)}>
+                {subcategorias[categoria].map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="ct-row">
+            <label>
+              Método de contacto
+              <select value={metodo} onChange={(e) => setMetodo(e.target.value)}>
+                {metodosContacto.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </label>
             <label>
@@ -101,6 +144,22 @@ function CrearTicket() {
             />
             <div className="ct-counter">{descripcion.length}/{MAX_DESCRIPCION}</div>
           </label>
+
+          <div className="ct-campo">
+            <span className="ct-label">Imagen o captura de pantalla <em>(opcional)</em></span>
+            <label className="ct-dropzone">
+              <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleImagen} hidden />
+              <span className="ct-dropzone-icono">↑</span>
+              {imagen ? (
+                <strong>{imagen}</strong>
+              ) : (
+                <>
+                  <strong>Sube una imagen o arrástrala aquí</strong>
+                  <small>PNG, JPG o WEBP</small>
+                </>
+              )}
+            </label>
+          </div>
 
           <div className="ct-divider" />
 

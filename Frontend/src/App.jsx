@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard' // <--- Importado aquí
 import UsuarioLayout from './layouts/UsuarioLayout'
+import Inicio from './pages/Inicio'
 import MisTickets from './pages/MisTickets'
 import CrearTicket from './pages/CrearTicket'
 import FirmarActa from './pages/FirmarActa'
@@ -23,18 +23,16 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
-      
-      {/* Ruta para el panel de tarjetas (Admin / Soporte) */}
-      <Route path="/dashboard" element={<Dashboard />} /> 
 
-      {/* Usuario Final: Layout con menú lateral */}
+      {/* Usuario Final: layout con menú lateral */}
       <Route path="/usuario" element={<UsuarioLayout />}>
+        <Route path="inicio" element={<Inicio />} />
         <Route path="mis-solicitudes" element={<MisTickets />} />
         <Route path="crear-ticket" element={<CrearTicket />} />
         <Route path="firmar-acta" element={<FirmarActa />} />
       </Route>
 
-      {/* Administrador: mismo esquema de Layout con menú lateral */}
+      {/* Administrador: mismo esquema de layout con menú lateral */}
       <Route path="/administrador" element={<AdministradorLayout />}>
         <Route path="registrar-usuario" element={<RegistrarUsuario />} />
         <Route path="gestionar-roles" element={<GestionarRoles />} />
@@ -49,7 +47,7 @@ function App() {
         <Route path="historial-actas" element={<HistorialActas />} />
       </Route>
 
-      {/* Soporte TI: mismo esquema de layout, reutilizando sus pantallas */}
+      {/* Soporte TI: mismo esquema de layout, reutilizando sus 8 pantallas */}
       <Route path="/soporte" element={<SoporteLayout />}>
         <Route path="gestionar-ticket" element={<GestionarTicket />} />
         <Route path="asignar-activo" element={<AsignarActivo />} />
