@@ -36,7 +36,9 @@ function AdministradorLayout() {
 
   const seccionActual = pathname.split('/').pop()
   const todosLosItems = navSections.flatMap((s) => s.items)
-  const breadcrumb = todosLosItems.find((i) => i.to === seccionActual)?.label || 'Administración'
+  const breadcrumb = seccionActual === 'inicio'
+    ? 'Inicio'
+    : todosLosItems.find((i) => i.to === seccionActual)?.label || 'Administración'
 
   function cerrarSesion() {
     navigate('/', { replace: true })
@@ -48,12 +50,20 @@ function AdministradorLayout() {
         <div className="al-brand">
           <div className="al-logo">TI</div>
           <div>
-            <div className="al-brand-title">HOLA {nombreCapital.split(' ')[0].toUpperCase()}</div>
-            <div className="al-brand-sub">Bienvenido a Terpel</div>
+            <div className="al-brand-title">{nombreCapital}</div>
+            <div className="al-brand-sub">Administrador</div>
           </div>
         </div>
 
         <nav className="al-nav">
+          <NavLink
+            to="/administrador/inicio"
+            state={{ usuario, rol }}
+            className={({ isActive }) => `al-nav-item${isActive ? ' active' : ''}`}
+          >
+            <span className="al-nav-icon">⌂</span>
+            Inicio
+          </NavLink>
           {navSections.map((seccion) => (
             <div key={seccion.titulo} className="al-nav-section">
               <div className="al-nav-section-titulo">{seccion.titulo}</div>
@@ -71,21 +81,13 @@ function AdministradorLayout() {
             </div>
           ))}
         </nav>
-
-        <div className="al-user">
-          <div className="al-avatar">{nombreCapital.slice(0, 2).toUpperCase()}</div>
-          <div>
-            <div className="al-user-name">{nombreCapital}</div>
-            <div className="al-user-rol">Administrador</div>
-          </div>
-        </div>
       </aside>
 
       <div className="al-main">
         <header className="al-topbar">
           <div className="al-breadcrumb">Terpel Perú <span>›</span> {breadcrumb}</div>
           <div className="al-topbar-right">
-            <span className="al-rol-badge">Administrador</span>
+            <span className="al-rol-badge">Admin</span>
             <button className="al-cerrar" onClick={cerrarSesion}>Cerrar sesión</button>
           </div>
         </header>

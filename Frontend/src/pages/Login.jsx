@@ -24,9 +24,9 @@ function Login() {
     if (rol === 'Usuario Final') {
       navigate('/usuario/inicio', { state: { usuario, rol } })
     } else if (rol === 'Administrador') {
-      navigate('/administrador/registrar-usuario', { state: { usuario, rol } })
+      navigate('/administrador/inicio', { state: { usuario, rol } })
     } else {
-      navigate('/soporte/gestionar-ticket', { state: { usuario, rol } })
+      navigate('/soporte/inicio', { state: { usuario, rol } })
     }
   }
 

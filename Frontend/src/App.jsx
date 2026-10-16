@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import UsuarioLayout from './layouts/UsuarioLayout'
 import Inicio from './pages/Inicio'
+import InicioSoporte from './pages/InicioSoporte'
+import InicioAdmin from './pages/InicioAdmin'
 import MisTickets from './pages/MisTickets'
 import CrearTicket from './pages/CrearTicket'
 import FirmarActa from './pages/FirmarActa'
@@ -34,6 +36,7 @@ function App() {
 
       {/* Administrador: mismo esquema de layout con menú lateral */}
       <Route path="/administrador" element={<AdministradorLayout />}>
+        <Route path="inicio" element={<InicioAdmin />} />
         <Route path="registrar-usuario" element={<RegistrarUsuario />} />
         <Route path="gestionar-roles" element={<GestionarRoles />} />
         <Route path="reportes-inventario" element={<ReportesInventario />} />
@@ -49,6 +52,7 @@ function App() {
 
       {/* Soporte TI: mismo esquema de layout, reutilizando sus 8 pantallas */}
       <Route path="/soporte" element={<SoporteLayout />}>
+        <Route path="inicio" element={<InicioSoporte />} />
         <Route path="gestionar-ticket" element={<GestionarTicket />} />
         <Route path="asignar-activo" element={<AsignarActivo />} />
         <Route path="registrar-devolucion" element={<RegistrarDevolucion />} />
