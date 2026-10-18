@@ -10,7 +10,6 @@ import helpdesk.backend.repositories.RolRepository;
 import helpdesk.backend.repositories.UsuarioRepository;
 import helpdesk.backend.security.CustomUserDetailsService;
 import helpdesk.backend.security.JwtService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Service;
 import java.util.Random;
 
 @Service
-@RequiredArgsConstructor
 public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
@@ -29,6 +27,23 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final EmailService emailService; // Inyectamos el servicio de correos
+
+    public AuthService(
+            UsuarioRepository usuarioRepository,
+            RolRepository rolRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            AuthenticationManager authenticationManager,
+            CustomUserDetailsService userDetailsService,
+            EmailService emailService) {
+        this.usuarioRepository = usuarioRepository;
+        this.rolRepository = rolRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+        this.userDetailsService = userDetailsService;
+        this.emailService = emailService;
+    }
 
     public AuthResponse register(RegisterRequest request) {
         String nombreRol = request.getCorreo().endsWith("@utp.edu.pe") ? "Admin" : "Usuario";

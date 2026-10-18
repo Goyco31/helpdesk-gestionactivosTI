@@ -5,16 +5,18 @@ import helpdesk.backend.dtos.LoginRequest;
 import helpdesk.backend.dtos.RegisterRequest;
 import helpdesk.backend.dtos.Verify2faRequest;
 import helpdesk.backend.services.AuthService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
+    
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {

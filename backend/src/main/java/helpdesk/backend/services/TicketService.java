@@ -5,17 +5,20 @@ import helpdesk.backend.entities.Ticket;
 import helpdesk.backend.entities.Usuario;
 import helpdesk.backend.repositories.TicketRepository;
 import helpdesk.backend.repositories.UsuarioRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class TicketService {
 
     private final TicketRepository ticketRepository;
     private final UsuarioRepository usuarioRepository;
+
+    public TicketService(TicketRepository ticketRepository, UsuarioRepository usuarioRepository) {
+        this.ticketRepository = ticketRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
 
     public Ticket crearTicket(TicketRequest request, String correoUsuario) {
         Usuario autor = usuarioRepository.findByCorreo(correoUsuario)
