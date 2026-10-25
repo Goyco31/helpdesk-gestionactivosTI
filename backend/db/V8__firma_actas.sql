@@ -10,12 +10,12 @@
 -- =====================================================================
 BEGIN;
 
-ALTER TABLE acta ADD COLUMN hash_pdf          CHAR(64);         -- huella del PDF original
+ALTER TABLE acta ADD COLUMN hash_pdf          VARCHAR(64);        -- huella del PDF original
 ALTER TABLE acta ADD COLUMN firma_nombre      VARCHAR(200);     -- nombre escrito al firmar
 ALTER TABLE acta ADD COLUMN firma_fecha       TIMESTAMP;
 ALTER TABLE acta ADD COLUMN firma_ip          VARCHAR(45);
 ALTER TABLE acta ADD COLUMN url_pdf_firmado   VARCHAR(255) CONSTRAINT uq_acta_url_pdf_firmado UNIQUE;
-ALTER TABLE acta ADD COLUMN hash_pdf_firmado  CHAR(64);
+ALTER TABLE acta ADD COLUMN hash_pdf_firmado  VARCHAR(64);
 
 -- Coherencia: un acta firmada siempre tiene todos los datos de la firma
 ALTER TABLE acta ADD CONSTRAINT ck_acta_firma CHECK (
