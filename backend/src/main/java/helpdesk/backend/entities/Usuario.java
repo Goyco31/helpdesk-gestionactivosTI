@@ -32,7 +32,8 @@ public class Usuario {
     @JoinColumn(name = "rol_id", nullable = false)
     private Rol rol;
 
-    @Column(unique = true, length = 15)
+    // Exactamente 8 digitos (CHECK ck_usuario_dni en la BD)
+    @Column(unique = true, length = 8)
     private String dni;
 
     @Column(length = 100)

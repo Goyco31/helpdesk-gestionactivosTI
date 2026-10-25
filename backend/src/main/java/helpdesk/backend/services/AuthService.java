@@ -34,6 +34,7 @@ public class AuthService {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int MINUTOS_VALIDEZ_2FA = 5;
     private static final int MAX_INTENTOS_2FA = 5;
+    private static final String FORMATO_DNI = "^\\d{8}$";
 
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
@@ -60,7 +61,12 @@ public class AuthService {
         if (usuarioRepository.existsByCorreoIgnoreCase(correo)) {
             throw new ApiException(HttpStatus.CONFLICT, "Ya existe un usuario con ese correo");
         }
-        if (!esVacio(request.getDni()) && usuarioRepository.existsByDni(request.getDni())) {
+        // DNI peruano: exactamente 8 digitos (se guarda como texto para conservar ceros iniciales)
+        String dni = request.getDni() == null ? "" : request.getDni().trim();
+        if (!dni.matches(FORMATO_DNI)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El DNI debe tener exactamente 8 dígitos numéricos");
+        }
+        if (usuarioRepository.existsByDni(dni)) {
             throw new ApiException(HttpStatus.CONFLICT, "Ya existe un usuario con ese DNI");
         }
 
@@ -77,7 +83,7 @@ public class AuthService {
         usuario.setApellidos(normalizarEspacios(request.getApellidos()));
         usuario.setCorreo(correo);
         usuario.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        usuario.setDni(esVacio(request.getDni()) ? null : request.getDni());
+        usuario.setDni(dni);
         usuario.setCargo(request.getCargo());
         usuario.setCelular(request.getCelular());
         usuario.setArea(catalogos.area(request.getArea()));
