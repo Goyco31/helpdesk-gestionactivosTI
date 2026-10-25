@@ -1,25 +1,76 @@
 import { useState } from 'react'
+import axios from 'axios'
 import './RegistrarActivo.css'
 
 const categorias = ['Laptop', 'CPU', 'Monitor', 'Impresora', 'TV', 'ClickShare', 'Router', 'Switch', 'Servidor']
-const sedes = ['Lima Central', 'Callao', 'Arequipa', 'Trujillo']
+const sedes = ['San Isidro', 'Callao', 'Arequipa', 'Trujillo']
+const sociedades = ['Terpel Perú', 'Terpel Comercial Perú', 'Planta']
 
 function RegistrarActivo() {
   const [categoria, setCategoria] = useState(categorias[0])
+  const [sede, setSede] = useState(sedes[0])
+  const [sociedad, setSociedad] = useState(sociedades[0])
   const [marca, setMarca] = useState('')
   const [modelo, setModelo] = useState('')
-  const [codigo, setCodigo] = useState('')
-  const [sede, setSede] = useState(sedes[0])
+  const [numeroSerie, setNumeroSerie] = useState('')
+  const [codigo, setCodigo] = useState('TERPEL ')
+  
   const [registrado, setRegistrado] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e) {
+  const handleCodigoChange = (e) => {
+    const prefijo = "TERPEL "
+    const valorActual = e.target.value
+
+    if (!valorActual.startsWith(prefijo)) {
+      setCodigo(prefijo)
+      return
+    }
+
+    const numerosIngresados = valorActual.slice(prefijo.length)
+    
+    if (/^\d{0,8}$/.test(numerosIngresados)) {
+      setCodigo(valorActual)
+    }
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault()
-    if (!marca.trim() || !modelo.trim() || !codigo.trim()) return
-    // Mientras no hay backend, simulamos el registro.
-    // Más adelante esto será un POST a /api/activos con axios (RF04).
-    setRegistrado(true)
-    setTimeout(() => setRegistrado(false), 2500)
-    setMarca(''); setModelo(''); setCodigo('')
+    if (!marca.trim() || !modelo.trim() || codigo === 'TERPEL ' || !numeroSerie.trim()) return
+
+    setLoading(true)
+    try {
+      const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/activos/registrar`
+      
+      const token = localStorage.getItem('token')
+
+      await axios.post(url, {
+        codigoPatrimonial: codigo,
+        numeroSerie: numeroSerie,
+        categoria: categoria,
+        marca: marca,
+        modelo: modelo,
+        sede: sede,
+        sociedad: sociedad
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      setRegistrado(true)
+      setMarca('')
+      setModelo('')
+      setNumeroSerie('')
+      setCodigo('TERPEL ') 
+
+      setTimeout(() => setRegistrado(false), 2500)
+    } catch (error) {
+      console.error("Error al registrar activo:", error)
+      alert("Error: Verifica que el código patrimonial o N° de serie no estén duplicados, o que tu sesión siga activa.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -36,10 +87,29 @@ function RegistrarActivo() {
             </select>
           </label>
           <label>
+            Sociedad
+            <select value={sociedad} onChange={(e) => setSociedad(e.target.value)}>
+              {sociedades.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <div className="rac-row">
+          <label>
             Sede
             <select value={sede} onChange={(e) => setSede(e.target.value)}>
               {sedes.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
+          </label>
+          <label>
+            Código de inventario
+            <input 
+              type="text" 
+              placeholder="TERPEL 00000000" 
+              value={codigo} 
+              onChange={handleCodigoChange} 
+              required 
+            />
           </label>
         </div>
 
@@ -55,15 +125,17 @@ function RegistrarActivo() {
         </div>
 
         <label>
-          Código de inventario
-          <input type="text" placeholder="Ej. TP-CP-00090" value={codigo} onChange={(e) => setCodigo(e.target.value)} required />
+          N° de Serie
+          <input type="text" placeholder="S/N del fabricante" value={numeroSerie} onChange={(e) => setNumeroSerie(e.target.value)} required />
         </label>
 
         <div className="rac-estado-inicial">
           Estado inicial: <span className="rac-badge">Disponible</span>
         </div>
 
-        <button type="submit">{registrado ? 'Activo registrado ✓' : 'Registrar activo'}</button>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Guardando...' : registrado ? 'Activo registrado ✓' : 'Registrar activo'}
+        </button>
       </form>
     </div>
   )

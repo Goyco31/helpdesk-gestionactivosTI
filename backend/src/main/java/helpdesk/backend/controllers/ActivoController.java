@@ -20,7 +20,8 @@ public class ActivoController {
         return ResponseEntity.ok(activoService.listarTodos());
     }
 
-    @PostMapping
+    // Solución: Añadimos "/registrar" para que coincida con la URL de tu Axios en React
+    @PostMapping("/registrar")
     public ResponseEntity<Activo> crear(@RequestBody Activo activo) {
         return ResponseEntity.ok(activoService.crearActivo(activo));
     }

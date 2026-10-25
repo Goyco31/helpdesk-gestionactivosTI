@@ -18,10 +18,15 @@ public class ActivoService {
     }
 
     public Activo crearActivo(Activo activo) {
-        // Por defecto, cuando registramos un equipo nuevo, su estado es "Disponible"
+        // Validación estricta: Debe iniciar con "TERPEL " seguido de 1 a 8 números
+        if (activo.getCodigoPatrimonial() == null || !activo.getCodigoPatrimonial().matches("^TERPEL \\d{1,8}$")) {
+            throw new RuntimeException("Error de validación: El formato debe ser 'TERPEL ' seguido de hasta 8 números.");
+        }
+
         if (activo.getEstado() == null || activo.getEstado().isEmpty()) {
             activo.setEstado("Disponible");
         }
+        
         return activoRepository.save(activo);
     }
 }
