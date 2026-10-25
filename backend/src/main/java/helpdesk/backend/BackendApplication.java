@@ -14,7 +14,7 @@ public class BackendApplication {
 		// Todas las fechas del sistema (tickets, movimientos, actas) se registran en hora de Peru,
 		// aunque el servidor en la nube use UTC. Asi los KPI de SLA/MTTR no se descuadran.
 		TimeZone.setDefault(TimeZone.getTimeZone("America/Lima"));
-		SpringApplication.run(BackendApplication.class, args);
+ 		SpringApplication.run(BackendApplication.class, args);
 	}
 
 }
