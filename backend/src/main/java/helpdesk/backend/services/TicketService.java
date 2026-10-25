@@ -44,6 +44,8 @@ public class TicketService {
         Ticket nuevoTicket = new Ticket();
         nuevoTicket.setUsuario(autor);
         nuevoTicket.setAsunto(request.getAsunto().trim());
+        nuevoTicket.setDescripcion(request.getDescripcion() == null || request.getDescripcion().isBlank()
+                ? null : request.getDescripcion().trim());
         nuevoTicket.setCategoria(request.getCategoria().trim());
         nuevoTicket.setPrioridad(request.getPrioridad());
         nuevoTicket.setEstado(Ticket.ABIERTO);

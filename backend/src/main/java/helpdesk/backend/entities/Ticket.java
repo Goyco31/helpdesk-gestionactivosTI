@@ -25,6 +25,9 @@ public class Ticket {
     @Column(nullable = false, length = 200)
     private String asunto;
 
+    @Column(length = 500)
+    private String descripcion;
+
     @Column(nullable = false, length = 50)
     private String categoria;
 
