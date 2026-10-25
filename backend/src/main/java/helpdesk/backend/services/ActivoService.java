@@ -28,6 +28,7 @@ public class ActivoService {
     private final CategoriaActivoRepository categoriaRepository;
     private final EstadoActivoRepository estadoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final CatalogoService catalogos;
 
     /** Inventario. Por defecto oculta los activos "de baja", como en el Excel actual. */
     @Transactional(readOnly = true)
@@ -75,6 +76,8 @@ public class ActivoService {
         activo.setMarca(request.marca());
         activo.setModelo(request.modelo());
         activo.setNumeroSerie(request.numeroSerie());
+        activo.setSede(catalogos.sede(request.sede()));
+        activo.setSociedad(catalogos.sociedad(request.sociedad()));
         // Todo equipo nuevo entra al almacen sin dueño
         activo.setEstado(estado(EstadoActivo.POR_ASIGNAR));
         activo.setUsuarioActual(null);
