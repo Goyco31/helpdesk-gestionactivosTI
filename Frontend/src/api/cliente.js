@@ -65,6 +65,17 @@ export function claseEstadoActivo(estado) {
   }[estado] || 'disponible'
 }
 
+/** Correo del usuario autenticado, leído del token JWT (campo "sub"). */
+export function correoActual() {
+  try {
+    const token = localStorage.getItem('token')
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return payload.sub || null
+  } catch {
+    return null
+  }
+}
+
 export function formatoFecha(iso, conHora = false) {
   if (!iso) return '—'
   const d = new Date(iso)
