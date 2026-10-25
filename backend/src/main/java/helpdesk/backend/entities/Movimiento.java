@@ -2,16 +2,19 @@ package helpdesk.backend.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Historial de movimientos de un activo (tabla movimiento).
  *
  * Es inalterable: todas las columnas son updatable = false y, ademas, un
- * trigger en PostgreSQL rechaza cualquier UPDATE o DELETE. La unica
- * excepcion es enlazar el acta (acta_id) una sola vez, al generar el PDF.
+ * trigger en PostgreSQL rechaza cualquier UPDATE, DELETE o TRUNCATE.
  */
 @Data
 @Entity
@@ -68,8 +71,10 @@ public class Movimiento {
     @Column(length = 500, updatable = false)
     private String observacion;
 
-    // Se enlaza en la Parte 3, al generar el PDF del acta
-    @ManyToOne
-    @JoinColumn(name = "acta_id")
-    private Acta acta;
+    // Actas generadas por este movimiento (una reasignacion genera dos)
+    @OneToMany(mappedBy = "movimiento")
+    @OrderBy("id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Acta> actas = new ArrayList<>();
 }

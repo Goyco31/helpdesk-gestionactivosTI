@@ -1,10 +1,12 @@
 package helpdesk.backend.dtos;
 
+import helpdesk.backend.actas.ActaPdfGenerator;
 import helpdesk.backend.entities.Movimiento;
 import helpdesk.backend.entities.Usuario;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record MovimientoResponse(
         Integer id,
@@ -20,8 +22,11 @@ public record MovimientoResponse(
         String registradoPor,
         LocalDate fechaDevolucionPrevista,
         String observacion,
-        Integer actaId
+        List<ActaResumen> actas
 ) {
+    /** Acta generada por el movimiento (una reasignacion genera dos). */
+    public record ActaResumen(Integer id, String codigo, String tipo, String urlDescarga) {}
+
     public static MovimientoResponse de(Movimiento m) {
         return new MovimientoResponse(
                 m.getId(),
@@ -37,7 +42,10 @@ public record MovimientoResponse(
                 nombre(m.getRegistradoPor()),
                 m.getFechaDevolucionPrevista(),
                 m.getObservacion(),
-                m.getActa() == null ? null : m.getActa().getId());
+                m.getActas().stream()
+                        .map(a -> new ActaResumen(a.getId(), ActaPdfGenerator.codigo(a), a.getTipoActa(),
+                                "/api/actas/" + a.getId() + "/pdf"))
+                        .toList());
     }
 
     private static String nombre(Usuario u) {
