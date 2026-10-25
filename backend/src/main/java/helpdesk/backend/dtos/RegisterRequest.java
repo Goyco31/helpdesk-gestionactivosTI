@@ -11,4 +11,6 @@ public class RegisterRequest {
     private String cargo;
     private String celular;
     private String area;
+    // Rol de la nueva cuenta: admin, soporte o usuario (si se omite, usuario)
+    private String rol;
 }
