@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
+import api, { mensajeError } from '../api/cliente'
 import './CrearTicket.css'
 
 const categorias = ['Equipos', 'Aplicaciones', 'Redes']
@@ -16,6 +17,7 @@ function CrearTicket() {
   const [descripcion, setDescripcion] = useState('')
   const [enviado, setEnviado] = useState(false)
   const [idTicket, setIdTicket] = useState(null)
+  const [enviando, setEnviando] = useState(false)
 
   function limpiar() {
     setCategoria(categorias[0])
@@ -24,14 +26,21 @@ function CrearTicket() {
     setDescripcion('')
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!asunto.trim() || !descripcion.trim()) return
-    // Mientras no hay backend, simulamos la creación del ticket.
-    // Más adelante esto será un POST a /api/tickets con axios.
-    const nuevoId = Math.floor(1000 + Math.random() * 9000)
-    setIdTicket(nuevoId)
-    setEnviado(true)
+    setEnviando(true)
+    try {
+      // RF02: se registra en PostgreSQL con estado "Abierto"
+      const { data } = await api.post('/api/tickets', { asunto, descripcion, categoria, prioridad })
+      setIdTicket(data.id)
+      setEnviado(true)
+    } catch (error) {
+      console.error('Error al crear el ticket:', error)
+      alert(mensajeError(error, 'No se pudo crear el ticket.'))
+    } finally {
+      setEnviando(false)
+    }
   }
 
   function volverAMisSolicitudes() {
@@ -106,7 +115,9 @@ function CrearTicket() {
 
           <div className="ct-actions">
             <button type="button" className="ct-limpiar" onClick={limpiar}>Limpiar</button>
-            <button type="submit" className="ct-enviar">Enviar ticket</button>
+            <button type="submit" className="ct-enviar" disabled={enviando}>
+              {enviando ? 'Enviando...' : 'Enviar ticket'}
+            </button>
           </div>
         </form>
 

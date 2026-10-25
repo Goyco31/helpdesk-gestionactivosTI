@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
-
-const API = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+import api from './cliente'
 
 /**
  * Carga un catálogo del backend (areas, sedes, sociedades, categorias, estados)
@@ -13,9 +11,8 @@ export function useCatalogo(nombre) {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    axios
-      .get(`${API}/api/catalogos/${nombre}`, { headers: { Authorization: `Bearer ${token}` } })
+    api
+      .get(`/api/catalogos/${nombre}`)
       .then((res) => setItems(res.data.map((x) => x.nombre)))
       .catch((err) => {
         console.error(`No se pudo cargar el catálogo ${nombre}:`, err)
