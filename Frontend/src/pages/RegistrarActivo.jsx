@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import axios from 'axios'
+import { useCatalogo } from '../api/catalogos'
 import './RegistrarActivo.css'
 
-const categorias = ['Laptop', 'CPU', 'Monitor', 'Impresora', 'TV', 'ClickShare', 'Router', 'Switch', 'Servidor']
-const sedes = ['San Isidro', 'Callao', 'Arequipa', 'Trujillo']
-const sociedades = ['Terpel Perú', 'Terpel Comercial Perú', 'Planta']
-
 function RegistrarActivo() {
-  const [categoria, setCategoria] = useState(categorias[0])
-  const [sede, setSede] = useState(sedes[0])
-  const [sociedad, setSociedad] = useState(sociedades[0])
+  // Las opciones vienen de la base de datos (tablas catálogo)
+  const { items: categorias } = useCatalogo('categorias')
+  const { items: sedes } = useCatalogo('sedes')
+  const { items: sociedades } = useCatalogo('sociedades')
+
+  const [categoria, setCategoria] = useState('')
+  const [sede, setSede] = useState('')
+  const [sociedad, setSociedad] = useState('')
   const [marca, setMarca] = useState('')
   const [modelo, setModelo] = useState('')
   const [numeroSerie, setNumeroSerie] = useState('')
@@ -36,7 +38,8 @@ function RegistrarActivo() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!marca.trim() || !modelo.trim() || codigo === 'TERPEL ' || !numeroSerie.trim()) return
+    if (!marca.trim() || !modelo.trim() || codigo === 'TERPEL ' || !numeroSerie.trim()
+        || !categoria || !sede || !sociedad) return
 
     setLoading(true)
     try {
@@ -84,13 +87,15 @@ function RegistrarActivo() {
         <div className="rac-row">
           <label>
             Categoría
-            <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)} required>
+              <option value="" disabled>Selecciona...</option>
               {categorias.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
           <label>
             Sociedad
-            <select value={sociedad} onChange={(e) => setSociedad(e.target.value)}>
+            <select value={sociedad} onChange={(e) => setSociedad(e.target.value)} required>
+              <option value="" disabled>Selecciona...</option>
               {sociedades.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
@@ -99,7 +104,8 @@ function RegistrarActivo() {
         <div className="rac-row">
           <label>
             Sede
-            <select value={sede} onChange={(e) => setSede(e.target.value)}>
+            <select value={sede} onChange={(e) => setSede(e.target.value)} required>
+              <option value="" disabled>Selecciona...</option>
               {sedes.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>

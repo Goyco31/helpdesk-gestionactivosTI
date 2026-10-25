@@ -33,6 +33,15 @@ public class Activo {
     @JoinColumn(name = "estado_id", nullable = false)
     private EstadoActivo estado;
 
+    @ManyToOne
+    @JoinColumn(name = "sociedad_id")
+    private Sociedad sociedad;
+
+    // Donde se encuentra fisicamente el equipo
+    @ManyToOne
+    @JoinColumn(name = "sede_id")
+    private Sede sede;
+
     // Colaborador que tiene el equipo ahora; null = en almacen.
     // Solo lo modifica MovimientoService.
     @ManyToOne

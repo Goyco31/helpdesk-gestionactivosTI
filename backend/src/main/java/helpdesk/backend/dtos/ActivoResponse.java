@@ -12,6 +12,8 @@ public record ActivoResponse(
         String modelo,
         String numeroSerie,
         String estado,
+        String sede,
+        String sociedad,
         Integer usuarioActualId,
         String usuarioActual,
         LocalDateTime fechaRegistro
@@ -25,6 +27,8 @@ public record ActivoResponse(
                 a.getModelo(),
                 a.getNumeroSerie(),
                 a.getEstado().getNombre(),
+                a.getSede() == null ? null : a.getSede().getNombre(),
+                a.getSociedad() == null ? null : a.getSociedad().getNombre(),
                 a.getUsuarioActual() == null ? null : a.getUsuarioActual().getId(),
                 a.getUsuarioActual() == null ? null : a.getUsuarioActual().getNombreCompleto(),
                 a.getFechaRegistro());

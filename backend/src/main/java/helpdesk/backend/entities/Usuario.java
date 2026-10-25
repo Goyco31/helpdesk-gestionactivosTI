@@ -41,8 +41,19 @@ public class Usuario {
     @Column(length = 20)
     private String celular;
 
-    @Column(length = 100)
-    private String area;
+    // Departamento (Sistemas, Legal, ...)
+    @ManyToOne
+    @JoinColumn(name = "area_id")
+    private Area area;
+
+    // Lugar fisico (San Isidro, Planta Callao)
+    @ManyToOne
+    @JoinColumn(name = "sede_id")
+    private Sede sede;
+
+    @ManyToOne
+    @JoinColumn(name = "sociedad_id")
+    private Sociedad sociedad;
 
     @JsonIgnore // nunca se envia el codigo 2FA en las respuestas JSON
     @Column(name = "codigo_2fa", length = 6)
