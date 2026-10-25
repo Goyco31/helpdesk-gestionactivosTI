@@ -51,4 +51,25 @@ public class Acta {
     // pendiente_firma, firmada, anulada
     @Column(nullable = false, length = 20)
     private String estado = "pendiente_firma";
+
+    // Huella SHA-256 del PDF original (prueba de que no fue alterado)
+    @Column(name = "hash_pdf", length = 64)
+    private String hashPdf;
+
+    // ---- Firma electronica simple del colaborador (HU-18) ----
+    @Column(name = "firma_nombre", length = 200)
+    private String firmaNombre;
+
+    @Column(name = "firma_fecha")
+    private LocalDateTime firmaFecha;
+
+    @Column(name = "firma_ip", length = 45)
+    private String firmaIp;
+
+    // PDF firmado: archivo nuevo, el original nunca se modifica
+    @Column(name = "url_pdf_firmado", length = 255, unique = true)
+    private String urlPdfFirmado;
+
+    @Column(name = "hash_pdf_firmado", length = 64)
+    private String hashPdfFirmado;
 }

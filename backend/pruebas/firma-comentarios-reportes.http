@@ -1,0 +1,130 @@
+### =====================================================================
+### Pruebas: firma de actas (HU-18), comentarios de tickets (RF10),
+### edicion de activos (RF04), cambio de roles (HU-14) y reportes (KPI)
+### Ejecutar despues de movimientos.http (necesita un acta generada).
+### =====================================================================
+
+@base = http://localhost:8080
+@tokenUsuario = PEGAR_TOKEN_DEL_COLABORADOR_DEL_ACTA
+@tokenOtro    = PEGAR_TOKEN_DE_OTRO_COLABORADOR
+@tokenSoporte = PEGAR_TOKEN_DE_SOPORTE
+@tokenAdmin   = PEGAR_TOKEN_DE_ADMIN
+@acta = 1
+@ticket = 1
+@activo = 1
+
+### ---------------- Firma electronica ----------------
+
+### FI-01 Soporte intenta firmar en nombre del colaborador -> 403
+POST {{base}}/api/actas/{{acta}}/firmar
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "nombre": "Daniella Avril Cipriano Valverde", "acepto": true }
+
+### FI-02 Nombre que no coincide con el registrado -> 400
+POST {{base}}/api/actas/{{acta}}/firmar
+Authorization: Bearer {{tokenUsuario}}
+Content-Type: application/json
+
+{ "nombre": "Otra Persona", "acepto": true }
+
+### FI-03 Sin aceptar la declaracion -> 400
+POST {{base}}/api/actas/{{acta}}/firmar
+Authorization: Bearer {{tokenUsuario}}
+Content-Type: application/json
+
+{ "nombre": "Daniella Avril Cipriano Valverde", "acepto": false }
+
+### FI-04 Firma correcta (no importan mayusculas ni tildes) -> 200, estado "firmada"
+###       Se crea "...ACT-000001 - firmada.pdf" junto al original, que no se modifica
+POST {{base}}/api/actas/{{acta}}/firmar
+Authorization: Bearer {{tokenUsuario}}
+Content-Type: application/json
+
+{ "nombre": "daniella avril cipriano valverde", "acepto": true }
+
+### FI-05 Firmar de nuevo -> 409 "ya está firmada"
+POST {{base}}/api/actas/{{acta}}/firmar
+Authorization: Bearer {{tokenUsuario}}
+Content-Type: application/json
+
+{ "nombre": "Daniella Avril Cipriano Valverde", "acepto": true }
+
+### FI-06 Descargar: entrega el PDF firmado; ?original=true entrega el original
+GET {{base}}/api/actas/{{acta}}/pdf
+Authorization: Bearer {{tokenUsuario}}
+
+### FI-07 En DBeaver, un acta firmada no se puede alterar:
+###   UPDATE acta SET estado = 'pendiente_firma' WHERE id = 1;  -> ERROR: ya fue firmada
+
+### ---------------- Comentarios de tickets ----------------
+
+### CO-01 Soporte comenta el ticket -> 201
+POST {{base}}/api/tickets/{{ticket}}/comentarios
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "texto": "Se entregó laptop de reemplazo con cargador." }
+
+### CO-02 El colaborador ve los comentarios de SU ticket -> 200
+GET {{base}}/api/tickets/{{ticket}}/comentarios
+Authorization: Bearer {{tokenUsuario}}
+
+### CO-03 Otro colaborador intenta verlos -> 404
+GET {{base}}/api/tickets/{{ticket}}/comentarios
+Authorization: Bearer {{tokenOtro}}
+
+### CO-04 Comentario vacio -> 400
+POST {{base}}/api/tickets/{{ticket}}/comentarios
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "texto": "   " }
+
+### ---------------- Edicion de activos ----------------
+
+### EA-01 Soporte edita marca y modelo -> 200 (el codigo patrimonial no cambia)
+PUT {{base}}/api/activos/{{activo}}
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "marca": "Lenovo", "modelo": "ThinkPad T14 Gen 4" }
+
+### EA-02 Categoria inexistente -> 400
+PUT {{base}}/api/activos/{{activo}}
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "categoria": "Tostadora" }
+
+### ---------------- Roles ----------------
+
+### RO-01 Admin cambia su propio rol -> 409
+###       (usa el id del admin autenticado)
+PATCH {{base}}/api/usuarios/1/rol
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{ "rol": "usuario" }
+
+### RO-02 Soporte intenta cambiar un rol -> 403
+PATCH {{base}}/api/usuarios/3/rol
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "rol": "admin" }
+
+### ---------------- Reportes e indicadores ----------------
+
+### RE-01 Admin consulta el resumen -> 200 con inventario, actividad y KPI
+GET {{base}}/api/reportes/resumen?dias=30
+Authorization: Bearer {{tokenAdmin}}
+
+### RE-02 Filtrado por sede
+GET {{base}}/api/reportes/resumen?sede=San Isidro&dias=90
+Authorization: Bearer {{tokenAdmin}}
+
+### RE-03 Soporte intenta ver reportes -> 403
+GET {{base}}/api/reportes/resumen
+Authorization: Bearer {{tokenSoporte}}

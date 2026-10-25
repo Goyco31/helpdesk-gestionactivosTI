@@ -1,4 +1,5 @@
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { cerrarSesion, sesion } from '../api/cliente'
 import './Dashboard.css'
 
 const opcionesUsuario = [
@@ -14,7 +15,6 @@ const opcionesSoporte = [
   { titulo: 'Registrar devolución de activo', desc: 'Marca el retorno de un activo asignado.' },
   { titulo: 'Reasignar activo', desc: 'Traslada un activo de un usuario a otro.' },
   { titulo: 'Generar acta de asignación/devolución', desc: 'Genera el PDF automático del movimiento.' },
-  { titulo: 'Enviar acta firmada', desc: 'Sube el acta firmada por el usuario.' },
   { titulo: 'Registrar activo', desc: 'Incorpora un nuevo activo al inventario.' },
   { titulo: 'Editar / dar de baja activo', desc: 'Actualiza datos o retira un activo del inventario.' },
   { titulo: 'Consultar inventario', desc: 'Lista completa de activos y su estado actual.' },
@@ -41,35 +41,37 @@ function Dashboard() {
   const { state } = useLocation()
   const navigate = useNavigate()
 
-  // Si alguien entra directo a /dashboard sin pasar por el login,
-  // lo mandamos de vuelta.
-  if (!state) {
-    navigate('/', { replace: true })
-    return null
+  // Sin sesión se vuelve al login (la ruta además está protegida en App.jsx)
+  const usuario = state?.usuario || sesion().nombre
+  const rol = state?.rol || sesion().rol
+  if (!sesion().token || !rol) {
+    return <Navigate to="/" replace />
   }
-
-  const { usuario, rol } = state
   const opciones = menuPorRol[rol] || opcionesUsuario
 
-  // Pantallas ya construidas: mapeamos el título de la tarjeta a su ruta.
-  // Pantallas ya construidas: mapeamos el título de la tarjeta a su ruta corporativa.
+  // Cada rol navega dentro de su propio menú (Soporte TI ya no entra al de Administrador)
+  const base = rol === 'Administrador' ? '/administrador' : rol === 'Soporte TI' ? '/soporte' : '/usuario'
   const rutasListas = {
-    'Registrar usuario': '/administrador/registrar-usuario',
-    'Gestionar roles y permisos': '/administrador/gestionar-roles',
-    'Consultar reportes de inventario': '/administrador/reportes-inventario',
-    'Gestionar tickets': '/administrador/gestionar-ticket',
-    'Asignar activo a usuario': '/administrador/asignar-activo',
-    'Registrar devolución de activo': '/administrador/registrar-devolucion',
-    'Generar acta de asignación/devolución': '/administrador/generar-acta',
-    'Enviar acta firmada': '/administrador/enviar-acta',
-    'Registrar activo': '/administrador/registrar-activo',
-    'Editar / dar de baja activo': '/administrador/editar-activo',
-    'Consultar inventario': '/administrador/consultar-inventario',
-    'Consultar historial de actas': '/administrador/historial-actas',
+    'Registrar usuario': 'registrar-usuario',
+    'Gestionar roles y permisos': 'gestionar-roles',
+    'Consultar reportes de inventario': 'reportes-inventario',
+    'Gestionar tickets': 'gestionar-ticket',
+    'Asignar activo a usuario': 'asignar-activo',
+    'Registrar devolución de activo': 'registrar-devolucion',
+    'Reasignar activo': 'reasignar-activo',
+    'Generar acta de asignación/devolución': 'generar-acta',
+    'Registrar activo': 'registrar-activo',
+    'Editar / dar de baja activo': 'editar-activo',
+    'Consultar inventario': 'consultar-inventario',
+    'Consultar historial de actas': 'historial-actas',
+    'Crear ticket': 'crear-ticket',
+    'Consultar estado de tickets': 'mis-solicitudes',
+    'Consultar mis activos': 'mis-activos',
+    'Firmar acta digitalmente': 'firmar-acta',
   }
 
   function abrirOpcion(titulo) {
-    const ruta = rutasListas[titulo]
+    const ruta = rutasListas[titulo] && `${base}/${rutasListas[titulo]}`
     if (ruta) {
       navigate(ruta, { state: { usuario, rol } })
     } else {
@@ -86,7 +88,7 @@ function Dashboard() {
         </div>
         <div className="dashboard-header-right">
           <div className="dashboard-rol">{rol}</div>
-          <button className="dashboard-logout" onClick={() => navigate('/', { replace: true })}>
+          <button className="dashboard-logout" onClick={() => cerrarSesion(navigate)}>
             Cerrar sesión
           </button>
         </div>

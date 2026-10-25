@@ -1,6 +1,7 @@
 package helpdesk.backend.services;
 
 import helpdesk.backend.actas.ActaPdfGenerator;
+import helpdesk.backend.actas.Huella;
 import helpdesk.backend.actas.ActaStorage;
 import helpdesk.backend.dtos.ActaResponse;
 import helpdesk.backend.entities.Acta;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
@@ -109,6 +111,7 @@ public class ActaService {
         borrarSiSeRevierte(ruta);
 
         acta.setUrlPdf(ruta);
+        acta.setHashPdf(Huella.sha256(pdf));
         acta = actaRepository.save(acta);
 
         // Esta linea en el log alimenta el KPI "Tiempo de generacion de actas" (meta <= 3 s, RNF03)
@@ -154,6 +157,66 @@ public class ActaService {
     }
 
     // ------------------------------------------------------------------
+    // Firma electronica simple (HU-18, RF08)
+    // ------------------------------------------------------------------
+
+    /**
+     * El colaborador firma SU acta escribiendo su nombre completo y aceptando la
+     * declaracion. Se registra nombre, fecha, hora e IP, y se genera un PDF firmado
+     * nuevo con los sellos de firma. El PDF original no se toca y su huella SHA-256
+     * queda impresa en el firmado, asi se puede comprobar que ninguno fue alterado.
+     */
+    @Transactional
+    public ActaResponse firmar(Integer id, String nombreEscrito, boolean acepto, String ip, Authentication auth) {
+        Acta acta = actaRepository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "No existe el acta " + id));
+        Usuario firmante = usuario(auth);
+
+        if (!acta.getUsuario().getId().equals(firmante.getId())) {
+            // Ni siquiera Soporte o Admin pueden firmar en nombre del colaborador
+            throw new ApiException(HttpStatus.FORBIDDEN, "Solo el colaborador de esta acta puede firmarla");
+        }
+        if (!Acta.PENDIENTE_FIRMA.equals(acta.getEstado())) {
+            throw new ApiException(HttpStatus.CONFLICT, "El acta " + ActaPdfGenerator.codigo(acta) + " ya está " + acta.getEstado());
+        }
+        if (!acepto) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Debes aceptar la declaración para firmar");
+        }
+        if (nombreEscrito == null || !normalizar(nombreEscrito).equals(normalizar(firmante.getNombreCompleto()))) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "El nombre escrito no coincide con el registrado: " + firmante.getNombreCompleto());
+        }
+
+        // Si el acta es anterior a la V8, se calcula ahora la huella del original
+        if (acta.getHashPdf() == null && acta.getUrlPdf() != null) {
+            acta.setHashPdf(Huella.sha256(storage.leer(acta.getUrlPdf())));
+        }
+
+        acta.setFirmaNombre(nombreEscrito.trim().replaceAll("\\s+", " "));
+        acta.setFirmaFecha(LocalDateTime.now());
+        acta.setFirmaIp(ip);
+
+        byte[] pdf = pdfGenerator.generar(acta, detalleRepository.findByActaIdOrderById(acta.getId()));
+        String ruta = acta.getUrlPdf().replaceFirst("\\.pdf$", " - firmada.pdf");
+        storage.guardar(ruta, pdf);
+        borrarSiSeRevierte(ruta);
+
+        acta.setUrlPdfFirmado(ruta);
+        acta.setHashPdfFirmado(Huella.sha256(pdf));
+        acta.setEstado(Acta.FIRMADA);
+        acta = actaRepository.save(acta);
+
+        log.info("Acta {} firmada por {} desde {}", ActaPdfGenerator.codigo(acta), firmante.getCorreo(), ip);
+        return respuesta(acta);
+    }
+
+    // Compara nombres sin importar mayusculas, tildes ni espacios extra
+    private static String normalizar(String s) {
+        String sinTildes = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+        return sinTildes.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+    }
+
+    // ------------------------------------------------------------------
     // Consultas y descarga
     // ------------------------------------------------------------------
 
@@ -177,14 +240,16 @@ public class ActaService {
 
     public record ArchivoActa(String nombre, byte[] contenido) {}
 
+    /** Devuelve el PDF firmado si existe; con original = true, el PDF original. */
     @Transactional(readOnly = true)
-    public ArchivoActa descargar(Integer id, Authentication auth) {
+    public ArchivoActa descargar(Integer id, boolean original, Authentication auth) {
         Acta acta = buscarConAcceso(id, auth);
-        if (acta.getUrlPdf() == null) {
+        String ruta = (!original && acta.getUrlPdfFirmado() != null) ? acta.getUrlPdfFirmado() : acta.getUrlPdf();
+        if (ruta == null) {
             throw new ApiException(HttpStatus.NOT_FOUND, "El acta no tiene PDF generado");
         }
-        String nombre = acta.getUrlPdf().substring(acta.getUrlPdf().lastIndexOf('/') + 1);
-        return new ArchivoActa(nombre, storage.leer(acta.getUrlPdf()));
+        String nombre = ruta.substring(ruta.lastIndexOf('/') + 1);
+        return new ArchivoActa(nombre, storage.leer(ruta));
     }
 
     private Acta buscarConAcceso(Integer id, Authentication auth) {

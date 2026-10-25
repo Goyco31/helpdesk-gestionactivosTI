@@ -19,6 +19,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 && !error.config?.url?.includes('/api/auth/')) {
       localStorage.removeItem('token')
+      localStorage.removeItem('rol')
+      localStorage.removeItem('nombre')
       alert('Tu sesión expiró. Vuelve a iniciar sesión.')
       window.location.href = '/'
     }
@@ -63,6 +65,29 @@ export function claseEstadoActivo(estado) {
     'para baja': 'baja',
     'de baja': 'baja',
   }[estado] || 'disponible'
+}
+
+/** Datos de la sesión guardados al iniciar sesión (sobreviven a recargar la página). */
+export function sesion() {
+  return {
+    token: localStorage.getItem('token'),
+    nombre: localStorage.getItem('nombre') || '',
+    rol: localStorage.getItem('rol') || '',
+  }
+}
+
+/** Pantalla inicial de cada rol. */
+export function inicioPorRol(rol) {
+  if (rol === 'Usuario Final') return '/usuario/mis-solicitudes'
+  return '/dashboard'
+}
+
+/** Cierra la sesión: borra el token y vuelve al login. */
+export function cerrarSesion(navigate) {
+  localStorage.removeItem('token')
+  localStorage.removeItem('rol')
+  localStorage.removeItem('nombre')
+  navigate('/', { replace: true })
 }
 
 /** Correo del usuario autenticado, leído del token JWT (campo "sub"). */

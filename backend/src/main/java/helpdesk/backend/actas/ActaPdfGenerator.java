@@ -40,6 +40,8 @@ public class ActaPdfGenerator {
     private static final Color GRIS_FONDO = new Color(0xEE, 0xF1, 0xF5);
     private static final Color GRIS_BORDE = new Color(0xC5, 0xCC, 0xD6);
     private static final Color GRIS_TEXTO = new Color(0x5F, 0x6B, 0x7A);
+    private static final Color VERDE = new Color(0x1E, 0x7A, 0x46);
+    private static final Color VERDE_FONDO = new Color(0xEA, 0xF6, 0xEE);
 
     private static final Font TITULO = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 15, AZUL);
     private static final Font MARCA = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13, AZUL);
@@ -127,11 +129,14 @@ public class ActaPdfGenerator {
             texto.setSpacingAfter(30);
             doc.add(texto);
 
-            doc.add(firmas(colaborador, mov.getRegistradoPor()));
+            doc.add(firmas(acta, colaborador, mov.getRegistradoPor()));
 
-            Paragraph nota = new Paragraph(
-                    "Estado de firma: pendiente. El acta se firma electrónicamente desde el portal; "
-                            + "la firma queda registrada con fecha y hora en el sistema.", PEQUENA);
+            boolean firmada = acta.getFirmaFecha() != null;
+            Paragraph nota = new Paragraph(firmada
+                    ? "Firma electrónica simple registrada en el Sistema de Help Desk y Gestión de Activos de TI. "
+                      + "Huella SHA-256 del acta original: " + acta.getHashPdf()
+                    : "Estado de firma: pendiente. El colaborador firma electrónicamente desde el portal; "
+                      + "la firma queda registrada con fecha, hora e IP en el sistema.", PEQUENA);
             nota.setAlignment(Element.ALIGN_CENTER);
             nota.setSpacingBefore(10);
             doc.add(nota);
@@ -199,15 +204,50 @@ public class ActaPdfGenerator {
         return t;
     }
 
-    private PdfPTable firmas(Usuario colaborador, Usuario tecnico) {
+    private PdfPTable firmas(Acta acta, Usuario colaborador, Usuario tecnico) {
         PdfPTable t = new PdfPTable(new float[]{1f, 0.25f, 1f});
         t.setWidthPercentage(90);
+
+        // Fila 1: sellos de firma electronica (solo en el PDF firmado)
+        if (acta.getFirmaFecha() != null) {
+            t.addCell(sello("FIRMADO ELECTRÓNICAMENTE",
+                    acta.getFirmaNombre(),
+                    acta.getFirmaFecha().format(FECHA_HORA) + " · IP " + texto(acta.getFirmaIp())));
+            t.addCell(vacia());
+            t.addCell(sello("EMITIDO POR SOPORTE TI",
+                    tecnico.getNombreCompleto(),
+                    acta.getFechaGeneracion().format(FECHA_HORA)));
+        }
+
         t.addCell(bloqueFirma("EL COLABORADOR", colaborador.getNombreCompleto(), "DNI: " + texto(colaborador.getDni())));
-        PdfPCell espacio = new PdfPCell(new Phrase(""));
-        espacio.setBorder(Rectangle.NO_BORDER);
-        t.addCell(espacio);
+        t.addCell(vacia());
         t.addCell(bloqueFirma("SOPORTE TI", tecnico.getNombreCompleto(), texto(tecnico.getCargo())));
         return t;
+    }
+
+    private static PdfPCell vacia() {
+        PdfPCell c = new PdfPCell(new Phrase(""));
+        c.setBorder(Rectangle.NO_BORDER);
+        return c;
+    }
+
+    // Recuadro verde con los datos de la firma electronica
+    private PdfPCell sello(String titulo, String nombre, String detalle) {
+        PdfPCell c = new PdfPCell();
+        c.setBorderColor(VERDE);
+        c.setBorderWidth(1.2f);
+        c.setBackgroundColor(VERDE_FONDO);
+        c.setPadding(6);
+        Paragraph p1 = new Paragraph(titulo, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, VERDE));
+        p1.setAlignment(Element.ALIGN_CENTER);
+        Paragraph p2 = new Paragraph(nombre, FontFactory.getFont(FontFactory.HELVETICA_BOLDOBLIQUE, 10, Color.BLACK));
+        p2.setAlignment(Element.ALIGN_CENTER);
+        Paragraph p3 = new Paragraph(detalle, PEQUENA);
+        p3.setAlignment(Element.ALIGN_CENTER);
+        c.addElement(p1);
+        c.addElement(p2);
+        c.addElement(p3);
+        return c;
     }
 
     private PdfPCell bloqueFirma(String rol, String nombre, String detalle) {

@@ -220,3 +220,13 @@
       grid-template-columns: 1fr;
     }
   }
+/* Indicadores KPI / SLA (seccion 3.3 del informe) */
+.ri-kpis { margin-top: 20px; }
+.ri-kpi-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+.ri-kpi-table th { text-align: left; font-size: 12px; color: #7a8594; font-weight: 600; padding: 8px; border-bottom: 1px solid #e6e9ee; }
+.ri-kpi-table td { padding: 10px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+.ri-kpi-valor { font-weight: 700; white-space: nowrap; }
+.ri-kpi-calculo { font-size: 12px; color: #7a8594; }
+.ri-kpi-ok { color: #1e7a46; font-weight: 600; white-space: nowrap; }
+.ri-kpi-no { color: #c0392b; font-weight: 600; white-space: nowrap; }
+.ri-vacio { color: #7a8594; font-size: 14px; padding: 12px 0; }

@@ -1,5 +1,6 @@
 package helpdesk.backend.controllers;
 
+import helpdesk.backend.dtos.ComentarioDto;
 import helpdesk.backend.dtos.TicketEstadoRequest;
 import helpdesk.backend.dtos.TicketRequest;
 import helpdesk.backend.entities.Ticket;
@@ -38,6 +39,19 @@ public class TicketController {
                                                    @RequestBody TicketEstadoRequest request,
                                                    Authentication auth) {
         return ResponseEntity.ok(ticketService.actualizarEstado(id, request.estado(), auth.getName()));
+    }
+
+    // Comentarios: Soporte/Admin en cualquier ticket; el colaborador en los suyos
+    @GetMapping("/{id}/comentarios")
+    public ResponseEntity<List<ComentarioDto>> comentarios(@PathVariable Integer id, Authentication auth) {
+        return ResponseEntity.ok(ticketService.comentarios(id, auth));
+    }
+
+    @PostMapping("/{id}/comentarios")
+    public ResponseEntity<ComentarioDto> comentar(@PathVariable Integer id,
+                                                  @RequestBody ComentarioDto.Nuevo request,
+                                                  Authentication auth) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ticketService.comentar(id, request.texto(), auth));
     }
 
     @PostMapping
