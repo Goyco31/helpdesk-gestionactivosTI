@@ -26,9 +26,12 @@ function RegistrarUsuario() {
   const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
+    let { name, value } = e.target
+    // DNI: solo números y como máximo 8 dígitos (también al pegar texto)
+    if (name === 'dni') value = value.replace(/\D/g, '').slice(0, 8)
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     })
   }
 
@@ -126,7 +129,11 @@ function RegistrarUsuario() {
               <input
                 type="text"
                 name="dni"
-                placeholder="Número de documento"
+                placeholder="8 dígitos"
+                inputMode="numeric"
+                maxLength={8}
+                pattern="\d{8}"
+                title="El DNI debe tener exactamente 8 dígitos"
                 value={formData.dni}
                 onChange={handleChange}
                 required
