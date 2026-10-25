@@ -6,6 +6,8 @@ import helpdesk.backend.entities.Usuario;
 import helpdesk.backend.repositories.TicketRepository;
 import helpdesk.backend.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,5 +35,20 @@ public class TicketService {
 
     public List<Ticket> listarTodos() {
         return ticketRepository.findAll();
+    }
+
+    /**
+     * Control de acceso a nivel de datos: un USUARIO solo ve los tickets que el mismo creo.
+     */
+    public List<Ticket> listarSegunRol(Authentication auth) {
+        boolean esPersonalTI = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(r -> r.equals("ROLE_ADMIN") || r.equals("ROLE_SOPORTE"));
+        if (esPersonalTI) {
+            return ticketRepository.findAll();
+        }
+        Usuario usuario = usuarioRepository.findByCorreo(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado en la base de datos"));
+        return ticketRepository.findByUsuarioId(usuario.getId());
     }
 }

@@ -10,7 +10,8 @@ function RegistrarUsuario() {
     dni: '',
     cargo: '',
     celular: '',
-    area: 'Lima Central' // Valor por defecto para el área/sede
+    area: 'Lima Central', // Valor por defecto para el área/sede
+    rol: 'usuario'
   })
   const [creado, setCreado] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -30,8 +31,11 @@ function RegistrarUsuario() {
     try {
       const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/auth/register`
       
-      // Enviamos el objeto que coincide exactamente con RegisterRequest del backend
-      await axios.post(url, formData)
+      // Solo un administrador puede registrar: se envía su token JWT
+      const token = localStorage.getItem('token')
+      await axios.post(url, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
 
       setCreado(true)
       
@@ -43,13 +47,18 @@ function RegistrarUsuario() {
         dni: '',
         cargo: '',
         celular: '',
-        area: 'Lima Central'
+        area: 'Lima Central',
+        rol: 'usuario'
       })
 
       setTimeout(() => setCreado(false), 3000)
     } catch (error) {
       console.error("Error al registrar el usuario:", error)
-      alert("Hubo un error al registrar el usuario en el servidor. Verifica los datos o si el correo ya existe.")
+      const status = error.response?.status
+      const mensaje = error.response?.data?.mensaje
+      if (status === 401) alert("Tu sesión expiró. Vuelve a iniciar sesión.")
+      else if (status === 403) alert("Solo un administrador puede registrar usuarios.")
+      else alert(mensaje || "Hubo un error al registrar el usuario en el servidor.")
     } finally {
       setLoading(false)
     }
@@ -145,6 +154,15 @@ function RegistrarUsuario() {
               />
             </label>
           </div>
+
+          <label>
+            Rol en el sistema
+            <select name="rol" value={formData.rol} onChange={handleChange}>
+              <option value="usuario">Usuario (colaborador)</option>
+              <option value="soporte">Soporte TI</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </label>
 
           <button type="submit" disabled={loading}>
             {loading ? 'Guardando...' : creado ? 'Usuario creado ✓' : 'Crear usuario'}

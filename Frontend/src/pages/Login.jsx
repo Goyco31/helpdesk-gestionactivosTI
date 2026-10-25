@@ -49,7 +49,9 @@ function Login() {
 
       console.log("2. ¡Respuesta recibida del backend!", response.data);
 
-      const rolDelUsuario = response.data.role || 'Usuario Final'
+      // La BD devuelve admin / soporte / usuario; se traduce al nombre que usa el menú
+      const nombresDeRol = { admin: 'Administrador', soporte: 'Soporte TI', usuario: 'Usuario Final' }
+      const rolDelUsuario = nombresDeRol[(response.data.role || '').toLowerCase()] || 'Usuario Final'
       const nombreUsuario = response.data.username || usuario
       const tokenJWT = response.data.token
 
@@ -57,6 +59,7 @@ function Login() {
       console.log("Usuario detectado:", nombreUsuario);
 
       localStorage.setItem('token', tokenJWT)
+      localStorage.setItem('rol', rolDelUsuario)
 
       if (rolDelUsuario === 'Usuario Final') {
         console.log("Redirigiendo a /usuario/mis-solicitudes...");

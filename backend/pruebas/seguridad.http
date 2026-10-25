@@ -1,0 +1,82 @@
+### =====================================================================
+### Pruebas de seguridad y autorizacion (Observacion 13)
+### Ejecutar con IntelliJ (HTTP Client) o VS Code (extension "REST Client").
+### 1) Levanta el backend.  2) Completa las variables.  3) Ejecuta cada bloque
+###    y toma captura de la respuesta (codigo HTTP + JSON) como evidencia.
+### =====================================================================
+
+@base = http://localhost:8080
+# Pega aqui tokens obtenidos con /verify-2fa para cada rol
+@tokenUsuario = PEGAR_TOKEN_DE_UN_USUARIO
+@tokenSoporte = PEGAR_TOKEN_DE_SOPORTE
+@tokenAdmin   = PEGAR_TOKEN_DE_ADMIN
+
+### PS-01 Acceso sin token a un recurso protegido -> esperado 401
+GET {{base}}/api/activos
+
+### PS-02 Token alterado o falso -> esperado 401 "Token inválido o expirado"
+GET {{base}}/api/tickets
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.token.falso
+
+### PS-03 Login con contraseña incorrecta -> esperado 401 "Correo o contraseña incorrectos"
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{ "correo": "usuario@terpel.com", "password": "claveIncorrecta" }
+
+### PS-04 Codigo 2FA incorrecto -> esperado 401 "Código incorrecto o expirado"
+POST {{base}}/api/auth/verify-2fa
+Content-Type: application/json
+
+{ "correo": "usuario@terpel.com", "codigo": "000000" }
+
+### PS-05 Rol USUARIO intenta ver el inventario -> esperado 403
+GET {{base}}/api/activos
+Authorization: Bearer {{tokenUsuario}}
+
+### PS-06 Rol USUARIO intenta registrar un activo -> esperado 403
+POST {{base}}/api/activos/registrar
+Authorization: Bearer {{tokenUsuario}}
+Content-Type: application/json
+
+{ "codigoPatrimonial": "TERPEL 99999", "categoria": "Laptop", "marca": "Dell", "modelo": "Latitude", "numeroSerie": "PRUEBA-403" }
+
+### PS-07 Rol SOPORTE intenta registrar un usuario -> esperado 403
+POST {{base}}/api/auth/register
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "nombre": "Prueba", "correo": "prueba403@terpel.com", "password": "Prueba123", "rol": "admin" }
+
+### PS-08 Registro de usuario sin token (antes era publico) -> esperado 401
+POST {{base}}/api/auth/register
+Content-Type: application/json
+
+{ "nombre": "Intruso", "correo": "intruso@utp.edu.pe", "password": "Intruso123" }
+
+### PS-09 Rol SOPORTE consulta el inventario -> esperado 200
+GET {{base}}/api/activos
+Authorization: Bearer {{tokenSoporte}}
+
+### PS-10 Rol ADMIN registra un usuario con rol soporte -> esperado 201
+POST {{base}}/api/auth/register
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{ "nombre": "Técnico Prueba", "correo": "tecnico.prueba@terpel.com", "password": "Soporte123", "dni": "70000001", "rol": "soporte" }
+
+### PS-11 Rol USUARIO lista tickets -> esperado 200 solo con SUS tickets
+GET {{base}}/api/tickets
+Authorization: Bearer {{tokenUsuario}}
+
+### PS-12 La respuesta de tickets no expone password_hash ni codigo 2FA -> revisar JSON de PS-11
+
+### PS-13 CORS: origen no autorizado -> esperado 403 "Invalid CORS request"
+OPTIONS {{base}}/api/tickets
+Origin: https://sitio-malicioso.com
+Access-Control-Request-Method: GET
+
+### PS-14 CORS: origen autorizado -> esperado 200 con cabecera Access-Control-Allow-Origin
+OPTIONS {{base}}/api/tickets
+Origin: http://localhost:5173
+Access-Control-Request-Method: GET

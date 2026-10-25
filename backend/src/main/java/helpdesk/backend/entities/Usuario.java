@@ -1,5 +1,6 @@
 package helpdesk.backend.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -18,6 +19,7 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 150)
     private String correo;
 
+    @JsonIgnore // nunca se envia el hash en las respuestas JSON
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -37,6 +39,7 @@ public class Usuario {
     @Column(length = 100)
     private String area;
 
+    @JsonIgnore // nunca se envia el codigo 2FA en las respuestas JSON
     @Column(name = "codigo_2fa", length = 6)
     private String codigo2fa;
 }
