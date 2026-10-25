@@ -4,7 +4,8 @@ import './RegistrarUsuario.css'
 
 function RegistrarUsuario() {
   const [formData, setFormData] = useState({
-    nombre: '',
+    nombres: '',
+    apellidos: '',
     correo: '',
     password: '',
     dni: '',
@@ -25,7 +26,7 @@ function RegistrarUsuario() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!formData.nombre.trim() || !formData.correo.trim()) return
+    if (!formData.nombres.trim() || !formData.apellidos.trim() || !formData.correo.trim()) return
 
     setLoading(true)
     try {
@@ -41,7 +42,8 @@ function RegistrarUsuario() {
       
       // Limpiar formulario tras éxito
       setFormData({
-        nombre: '',
+        nombres: '',
+        apellidos: '',
         correo: '',
         password: '',
         dni: '',
@@ -72,17 +74,30 @@ function RegistrarUsuario() {
 
       <div className="ru-layout">
         <form className="ru-form-card" onSubmit={handleSubmit}>
-          <label>
-            Nombre completo
-            <input
-              type="text"
-              name="nombre"
-              placeholder="Ej. Laura Martínez"
-              value={formData.nombre}
-              onChange={handleChange}
-              required
-            />
-          </label>
+          <div className="ru-row">
+            <label>
+              Nombres
+              <input
+                type="text"
+                name="nombres"
+                placeholder="Ej. Laura Sofía"
+                value={formData.nombres}
+                onChange={handleChange}
+                required
+              />
+            </label>
+            <label>
+              Apellidos
+              <input
+                type="text"
+                name="apellidos"
+                placeholder="Ej. Martínez Rojas"
+                value={formData.apellidos}
+                onChange={handleChange}
+                required
+              />
+            </label>
+          </div>
 
           <div className="ru-row">
             <label>
@@ -115,7 +130,8 @@ function RegistrarUsuario() {
               <input
                 type="password"
                 name="password"
-                placeholder="••••••••"
+                placeholder="Mínimo 8 caracteres"
+                minLength={8}
                 value={formData.password}
                 onChange={handleChange}
                 required

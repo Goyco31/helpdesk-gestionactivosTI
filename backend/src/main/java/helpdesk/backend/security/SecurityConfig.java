@@ -37,10 +37,14 @@ import java.util.List;
  *  ---------------------------------+---------+---------+---------+------
  *  POST /api/auth/login, verify-2fa |   si    |   si    |   si    |  si
  *  POST /api/auth/register          |   no    |   no    |   no    |  si
- *  GET  /api/activos/**             |   no    |   no    |   si    |  si
- *  POST/PUT/DELETE /api/activos/**  |   no    |   no    |   si    |  si
+ *  GET  /api/activos/mis-activos    |   no    |   si    |   si    |  si
+ *  /api/activos/** (inventario)     |   no    |   no    |   si    |  si
+ *  /api/movimientos/**              |   no    |   no    |   si    |  si
+ *  GET  /api/usuarios               |   no    |   no    |   si    |  si
+ *  GET  /api/catalogos/**           |   no    |   si    |   si    |  si
  *  POST /api/tickets                |   no    |   si    |   si    |  si
- *  GET  /api/tickets                |   no    | solo los suyos | todos | todos
+ *  GET  /api/tickets, /{id}         |   no    | solo los suyos | todos | todos
+ *  PATCH /api/tickets/{id}/estado   |   no    |   no    |   si    |  si
  *
  * Sin token -> 401. Token valido pero rol sin permiso -> 403.
  */
@@ -68,8 +72,13 @@ public class SecurityConfig {
                 .requestMatchers("/error").permitAll()
                 // Solo el administrador crea cuentas
                 .requestMatchers("/api/auth/register").hasRole("ADMIN")
-                // Inventario: solo personal de TI
+                // RF03: cada usuario consulta sus propios activos (debe ir antes de /api/activos/**)
+                .requestMatchers(HttpMethod.GET, "/api/activos/mis-activos").hasAnyRole("ADMIN", "SOPORTE", "USUARIO")
+                // Inventario, movimientos y lista de colaboradores: solo personal de TI
                 .requestMatchers("/api/activos/**").hasAnyRole("ADMIN", "SOPORTE")
+                .requestMatchers("/api/movimientos/**").hasAnyRole("ADMIN", "SOPORTE")
+                .requestMatchers("/api/usuarios/**").hasAnyRole("ADMIN", "SOPORTE")
+                .requestMatchers("/api/catalogos/**").hasAnyRole("ADMIN", "SOPORTE", "USUARIO")
                 // Tickets: cualquier usuario autenticado (el servicio filtra lo que ve cada rol)
                 .requestMatchers("/api/tickets/**").hasAnyRole("ADMIN", "SOPORTE", "USUARIO")
                 .anyRequest().authenticated()
