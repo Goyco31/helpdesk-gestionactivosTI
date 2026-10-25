@@ -42,6 +42,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final EmailService emailService;
+    private final CatalogoService catalogos;
 
     /**
      * Registro de usuarios: solo lo ejecuta un ADMIN (ver SecurityConfig).
@@ -79,7 +80,9 @@ public class AuthService {
         usuario.setDni(esVacio(request.getDni()) ? null : request.getDni());
         usuario.setCargo(request.getCargo());
         usuario.setCelular(request.getCelular());
-        usuario.setArea(request.getArea());
+        usuario.setArea(catalogos.area(request.getArea()));
+        usuario.setSede(catalogos.sede(request.getSede()));
+        usuario.setSociedad(catalogos.sociedad(request.getSociedad()));
         usuario.setRol(rol);
 
         Usuario guardado = usuarioRepository.save(usuario);

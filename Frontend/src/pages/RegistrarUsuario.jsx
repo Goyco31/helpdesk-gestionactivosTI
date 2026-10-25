@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import axios from 'axios'
+import { useCatalogo } from '../api/catalogos'
 import './RegistrarUsuario.css'
 
 function RegistrarUsuario() {
+  // Las opciones vienen de la base de datos (tablas catálogo)
+  const { items: areas } = useCatalogo('areas')
+  const { items: sedes } = useCatalogo('sedes')
+  const { items: sociedades } = useCatalogo('sociedades')
+
   const [formData, setFormData] = useState({
     nombres: '',
     apellidos: '',
@@ -11,7 +17,9 @@ function RegistrarUsuario() {
     dni: '',
     cargo: '',
     celular: '',
-    area: 'Lima Central', // Valor por defecto para el área/sede
+    area: '',
+    sede: '',
+    sociedad: '',
     rol: 'usuario'
   })
   const [creado, setCreado] = useState(false)
@@ -49,7 +57,9 @@ function RegistrarUsuario() {
         dni: '',
         cargo: '',
         celular: '',
-        area: 'Lima Central',
+        area: '',
+        sede: '',
+        sociedad: '',
         rol: 'usuario'
       })
 
@@ -152,10 +162,10 @@ function RegistrarUsuario() {
 
           <div className="ru-row">
             <label>
-              Área / Sede
-              <select name="area" value={formData.area} onChange={handleChange}>
-                <option value="Lima Central">Oficna San Isidro</option>
-                <option value="Callao">Planta Callao</option>
+              Área
+              <select name="area" value={formData.area} onChange={handleChange} required>
+                <option value="" disabled>Selecciona...</option>
+                {areas.map((a) => <option key={a} value={a}>{a}</option>)}
               </select>
             </label>
             <label>
@@ -168,6 +178,23 @@ function RegistrarUsuario() {
                 onChange={handleChange}
                 required
               />
+            </label>
+          </div>
+
+          <div className="ru-row">
+            <label>
+              Sede
+              <select name="sede" value={formData.sede} onChange={handleChange} required>
+                <option value="" disabled>Selecciona...</option>
+                {sedes.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>
+            <label>
+              Sociedad
+              <select name="sociedad" value={formData.sociedad} onChange={handleChange} required>
+                <option value="" disabled>Selecciona...</option>
+                {sociedades.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
             </label>
           </div>
 

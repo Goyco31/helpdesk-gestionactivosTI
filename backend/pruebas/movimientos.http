@@ -22,7 +22,8 @@ POST {{base}}/api/activos/registrar
 Authorization: Bearer {{tokenSoporte}}
 Content-Type: application/json
 
-{ "codigoPatrimonial": "TERPEL 1001", "categoria": "Laptop", "marca": "Lenovo", "modelo": "ThinkPad T14", "numeroSerie": "PF-T14-0001" }
+{ "codigoPatrimonial": "TERPEL 1001", "categoria": "Laptop", "marca": "Lenovo", "modelo": "ThinkPad T14", "numeroSerie": "PF-T14-0001",
+  "sede": "San Isidro", "sociedad": "Terpel Perú" }
 
 ### P-02 El colaborador A crea su ticket -> 201, estado "Abierto"  (anota el "id" como TICKET_A)
 POST {{base}}/api/tickets
