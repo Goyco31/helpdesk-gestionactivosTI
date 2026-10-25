@@ -45,6 +45,7 @@ import java.util.List;
  *  POST /api/tickets                |   no    |   si    |   si    |  si
  *  GET  /api/tickets, /{id}         |   no    | solo los suyos | todos | todos
  *  PATCH /api/tickets/{id}/estado   |   no    |   no    |   si    |  si
+ *  GET  /api/actas, /{id}, /{id}/pdf|   no    | solo las suyas | todas | todas
  *
  * Sin token -> 401. Token valido pero rol sin permiso -> 403.
  */
@@ -79,6 +80,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/movimientos/**").hasAnyRole("ADMIN", "SOPORTE")
                 .requestMatchers("/api/usuarios/**").hasAnyRole("ADMIN", "SOPORTE")
                 .requestMatchers("/api/catalogos/**").hasAnyRole("ADMIN", "SOPORTE", "USUARIO")
+                // Actas: todos; el servicio limita a USUARIO a sus propias actas
+                .requestMatchers("/api/actas/**").hasAnyRole("ADMIN", "SOPORTE", "USUARIO")
                 // Tickets: cualquier usuario autenticado (el servicio filtra lo que ve cada rol)
                 .requestMatchers("/api/tickets/**").hasAnyRole("ADMIN", "SOPORTE", "USUARIO")
                 .anyRequest().authenticated()

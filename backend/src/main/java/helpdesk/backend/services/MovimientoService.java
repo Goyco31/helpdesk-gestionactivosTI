@@ -35,6 +35,7 @@ import java.util.Set;
  *  R5. Un activo "de baja" es definitivo: no admite mas movimientos.
  *  R6. Cada movimiento queda en el historial (tabla movimiento, inalterable)
  *      y el activo se vincula al ticket (tabla ticket_activo).
+ *  R7. Se genera automaticamente el acta en PDF (ver ActaService).
  *
  * La fila del activo se bloquea (SELECT ... FOR UPDATE) durante la
  * transaccion para que dos tecnicos no puedan asignar el mismo equipo a la vez.
@@ -62,6 +63,7 @@ public class MovimientoService {
     private final MovimientoRepository movimientoRepository;
     private final TicketActivoRepository ticketActivoRepository;
     private final ActivoService activoService;
+    private final ActaService actaService;
 
     // ------------------------------------------------------------------
     // Operaciones
@@ -275,6 +277,9 @@ public class MovimientoService {
         m.setFechaDevolucionPrevista(fechaDevolucion);
         m.setObservacion(observacion == null || observacion.isBlank() ? null : observacion.trim());
         Movimiento guardado = movimientoRepository.save(m);
+
+        // RF07: hoja de entrega / devolucion / prestamo en PDF, en la misma transaccion
+        actaService.generarParaMovimiento(guardado);
 
         if (!ticketActivoRepository.existsByTicketIdAndActivoId(c.ticket.getId(), c.activo.getId())) {
             TicketActivo enlace = new TicketActivo();

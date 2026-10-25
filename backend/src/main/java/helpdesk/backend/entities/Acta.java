@@ -2,12 +2,23 @@ package helpdesk.backend.entities;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import java.time.LocalDateTime;
 
 @Data
 @Entity
 @Table(name = "acta")
 public class Acta {
+
+    public static final String ENTREGA = "Entrega";
+    public static final String DEVOLUCION = "Devolucion";
+    public static final String PRESTAMO = "Prestamo";
+
+    public static final String PENDIENTE_FIRMA = "pendiente_firma";
+    public static final String FIRMADA = "firmada";
+    public static final String ANULADA = "anulada";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -16,9 +27,17 @@ public class Acta {
     @JoinColumn(name = "ticket_id", nullable = false)
     private Ticket ticket;
 
+    // Colaborador que recibe o devuelve el equipo
     @ManyToOne
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
+
+    // Movimiento que origino el acta
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "movimiento_id", nullable = false, updatable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Movimiento movimiento;
 
     @Column(name = "tipo_acta", nullable = false, length = 20)
     private String tipoActa;
