@@ -67,7 +67,9 @@ function RegistrarActivo() {
       setTimeout(() => setRegistrado(false), 2500)
     } catch (error) {
       console.error("Error al registrar activo:", error)
-      alert("Error: Verifica que el código patrimonial o N° de serie no estén duplicados, o que tu sesión siga activa.")
+      // El backend devuelve el motivo exacto en "mensaje" (ej. código duplicado -> 409)
+      const mensaje = error.response?.data?.mensaje
+      alert(mensaje || "Error: verifica los datos o que tu sesión siga activa.")
     } finally {
       setLoading(false)
     }

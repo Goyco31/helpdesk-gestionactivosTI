@@ -3,6 +3,8 @@ package helpdesk.backend.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @Entity
 @Table(name = "activo")
@@ -14,8 +16,9 @@ public class Activo {
     @Column(name = "codigo_patrimonial", nullable = false, unique = true, length = 50)
     private String codigoPatrimonial;
 
-    @Column(nullable = false, length = 50)
-    private String categoria;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "categoria_id", nullable = false)
+    private CategoriaActivo categoria;
 
     @Column(length = 50)
     private String marca;
@@ -26,6 +29,16 @@ public class Activo {
     @Column(name = "numero_serie", length = 100)
     private String numeroSerie;
 
-    @Column(nullable = false, length = 30)
-    private String estado;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "estado_id", nullable = false)
+    private EstadoActivo estado;
+
+    // Colaborador que tiene el equipo ahora; null = en almacen.
+    // Solo lo modifica MovimientoService.
+    @ManyToOne
+    @JoinColumn(name = "usuario_actual_id")
+    private Usuario usuarioActual;
+
+    @Column(name = "fecha_registro", nullable = false, updatable = false)
+    private LocalDateTime fechaRegistro = LocalDateTime.now();
 }

@@ -25,6 +25,7 @@ Content-Type: application/json
 { "correo": "usuario@terpel.com", "password": "claveIncorrecta" }
 
 ### PS-04 Codigo 2FA incorrecto -> esperado 401 "Código incorrecto o expirado"
+### (al 5.o intento fallido el codigo se invalida; tambien vence a los 5 minutos)
 POST {{base}}/api/auth/verify-2fa
 Content-Type: application/json
 
@@ -46,13 +47,13 @@ POST {{base}}/api/auth/register
 Authorization: Bearer {{tokenSoporte}}
 Content-Type: application/json
 
-{ "nombre": "Prueba", "correo": "prueba403@terpel.com", "password": "Prueba123", "rol": "admin" }
+{ "nombres": "Prueba", "apellidos": "Rol Soporte", "correo": "prueba403@terpel.com", "password": "Prueba123", "rol": "admin" }
 
 ### PS-08 Registro de usuario sin token (antes era publico) -> esperado 401
 POST {{base}}/api/auth/register
 Content-Type: application/json
 
-{ "nombre": "Intruso", "correo": "intruso@utp.edu.pe", "password": "Intruso123" }
+{ "nombres": "Intruso", "apellidos": "Externo", "correo": "intruso@utp.edu.pe", "password": "Intruso123" }
 
 ### PS-09 Rol SOPORTE consulta el inventario -> esperado 200
 GET {{base}}/api/activos
@@ -63,7 +64,7 @@ POST {{base}}/api/auth/register
 Authorization: Bearer {{tokenAdmin}}
 Content-Type: application/json
 
-{ "nombre": "Técnico Prueba", "correo": "tecnico.prueba@terpel.com", "password": "Soporte123", "dni": "70000001", "rol": "soporte" }
+{ "nombres": "Técnico", "apellidos": "Prueba", "correo": "tecnico.prueba@terpel.com", "password": "Soporte123", "dni": "70000001", "rol": "soporte" }
 
 ### PS-11 Rol USUARIO lista tickets -> esperado 200 solo con SUS tickets
 GET {{base}}/api/tickets
