@@ -180,3 +180,11 @@
   .gt-comentario-card button:hover {
     background: #c21425;
   }
+/* Estado Cerrado y detalle de comentarios (conexion con el backend) */
+.gt-badge.estado-cerrado { background: #eceff3; color: #5f6b7a; }
+.gt-detalle-desc { margin: 4px 0 12px; color: #4a5565; font-size: 14px; white-space: pre-wrap; }
+.gt-comentarios { display: flex; flex-direction: column; gap: 10px; margin: 8px 0 14px; max-height: 280px; overflow-y: auto; }
+.gt-comentario { border-left: 3px solid #d7dde5; padding: 4px 0 4px 10px; }
+.gt-comentario-autor { font-size: 12px; font-weight: 600; color: #1f3a5f; }
+.gt-comentario-autor span { font-weight: 400; color: #7a8594; margin-left: 6px; }
+.gt-comentario-texto { font-size: 14px; color: #2b3440; white-space: pre-wrap; }

@@ -1,31 +1,35 @@
 import { Outlet, useLocation, useNavigate, NavLink } from 'react-router-dom'
+import { cerrarSesion, sesion } from '../api/cliente'
 import './UsuarioLayout.css'
 
 const navItems = [
   { to: 'mis-solicitudes', label: 'Mis solicitudes', icon: '▤' },
   { to: 'crear-ticket', label: 'Crear ticket', icon: '+' },
+  { to: 'mis-activos', label: 'Mis activos', icon: '▣' },
   { to: 'firmar-acta', label: 'Firmar acta', icon: '✓' },
 ]
 
 const breadcrumbPorRuta = {
   'mis-solicitudes': 'Mis Solicitudes',
   'crear-ticket': 'Crear Ticket',
+  'mis-activos': 'Mis Activos',
   'firmar-acta': 'Firmar Acta',
 }
 
 function UsuarioLayout() {
   const { state, pathname } = useLocation()
   const navigate = useNavigate()
-  const usuario = state?.usuario || 'usuario@terpel.com'
-  const rol = state?.rol || 'Usuario Final'
+  // Si se recarga la página, el nombre y el rol se leen de la sesión guardada
+  const usuario = state?.usuario || sesion().nombre || 'Usuario'
+  const rol = state?.rol || sesion().rol || 'Usuario Final'
 
   const nombre = usuario.split('@')[0].replace(/[._]/g, ' ')
   const nombreCapital = nombre.replace(/\b\w/g, (l) => l.toUpperCase())
   const seccionActual = pathname.split('/').pop()
   const breadcrumb = breadcrumbPorRuta[seccionActual] || 'Mis Solicitudes'
 
-  function cerrarSesion() {
-    navigate('/', { replace: true })
+  function salir() {
+    cerrarSesion(navigate)
   }
 
   return (
@@ -67,7 +71,7 @@ function UsuarioLayout() {
           <div className="ul-breadcrumb">Terpel Perú <span>›</span> {breadcrumb}</div>
           <div className="ul-topbar-right">
             <span className="ul-rol-badge">Usuario</span>
-            <button className="ul-cerrar" onClick={cerrarSesion}>Cerrar sesión</button>
+            <button className="ul-cerrar" onClick={salir}>Cerrar sesión</button>
           </div>
         </header>
 

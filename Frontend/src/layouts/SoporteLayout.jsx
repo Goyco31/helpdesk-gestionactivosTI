@@ -1,10 +1,12 @@
 import { Outlet, useLocation, useNavigate, NavLink } from 'react-router-dom'
+import { cerrarSesion, sesion } from '../api/cliente'
 import './SoporteLayout.css'
 
 const navItems = [
   { to: 'gestionar-ticket', label: 'Gestionar ticket', icon: '▤' },
   { to: 'asignar-activo', label: 'Asignar activo', icon: '→' },
   { to: 'registrar-devolucion', label: 'Registrar devolución', icon: '↩' },
+  { to: 'reasignar-activo', label: 'Reasignar activo', icon: '⇄' },
   { to: 'generar-acta', label: 'Generar acta', icon: '▦' },
   { to: 'registrar-activo', label: 'Registrar activo', icon: '+' },
   { to: 'editar-activo', label: 'Editar / dar de baja', icon: '✎' },
@@ -15,8 +17,9 @@ const navItems = [
 function SoporteLayout() {
   const { state, pathname } = useLocation()
   const navigate = useNavigate()
-  const usuario = state?.usuario || 'soporte@terpel.com'
-  const rol = state?.rol || 'Soporte TI'
+  // Si se recarga la página, el nombre y el rol se leen de la sesión guardada
+  const usuario = state?.usuario || sesion().nombre || 'Usuario'
+  const rol = state?.rol || sesion().rol || 'Soporte TI'
 
   const nombre = usuario.split('@')[0].replace(/[._]/g, ' ')
   const nombreCapital = nombre.replace(/\b\w/g, (l) => l.toUpperCase())
@@ -24,8 +27,8 @@ function SoporteLayout() {
   const seccionActual = pathname.split('/').pop()
   const breadcrumb = navItems.find((i) => i.to === seccionActual)?.label || 'Soporte TI'
 
-  function cerrarSesion() {
-    navigate('/', { replace: true })
+  function salir() {
+    cerrarSesion(navigate)
   }
 
   return (
@@ -67,7 +70,7 @@ function SoporteLayout() {
           <div className="sl-breadcrumb">Terpel Perú <span>›</span> {breadcrumb}</div>
           <div className="sl-topbar-right">
             <span className="sl-rol-badge">Soporte TI</span>
-            <button className="sl-cerrar" onClick={cerrarSesion}>Cerrar sesión</button>
+            <button className="sl-cerrar" onClick={salir}>Cerrar sesión</button>
           </div>
         </header>
 

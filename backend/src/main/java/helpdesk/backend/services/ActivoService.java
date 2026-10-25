@@ -85,6 +85,37 @@ public class ActivoService {
         return ActivoResponse.de(activoRepository.save(activo));
     }
 
+    /**
+     * RF04: edita los datos descriptivos del activo. El codigo patrimonial no cambia
+     * (identifica al equipo) y el estado solo cambia mediante un movimiento con ticket.
+     * Las actas ya emitidas no se ven afectadas: guardan su propia copia del equipo.
+     */
+    @Transactional
+    public ActivoResponse actualizar(Integer id, ActivoRequest request) {
+        Activo activo = buscar(id);
+        if (EstadoActivo.DE_BAJA.equals(activo.getEstado().getNombre())) {
+            throw new ApiException(HttpStatus.CONFLICT, "El activo " + activo.getCodigoPatrimonial()
+                    + " está de baja y ya no se puede editar");
+        }
+        if (request.categoria() != null && !request.categoria().isBlank()) {
+            activo.setCategoria(categoriaRepository.findByNombreIgnoreCase(request.categoria().trim())
+                    .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST,
+                            "Categoría no válida: " + request.categoria())));
+        }
+        if (request.marca() != null) activo.setMarca(vacioANull(request.marca()));
+        if (request.modelo() != null) activo.setModelo(vacioANull(request.modelo()));
+        if (request.numeroSerie() != null) activo.setNumeroSerie(vacioANull(request.numeroSerie()));
+        if (request.sede() != null && !request.sede().isBlank()) activo.setSede(catalogos.sede(request.sede()));
+        if (request.sociedad() != null && !request.sociedad().isBlank()) {
+            activo.setSociedad(catalogos.sociedad(request.sociedad()));
+        }
+        return ActivoResponse.de(activoRepository.save(activo));
+    }
+
+    private static String vacioANull(String s) {
+        return s.isBlank() ? null : s.trim();
+    }
+
     Activo buscar(Integer id) {
         if (id == null) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Falta el id del activo");

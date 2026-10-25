@@ -1,6 +1,9 @@
 package helpdesk.backend.services;
 
+import helpdesk.backend.dtos.ComentarioDto;
 import helpdesk.backend.dtos.TicketRequest;
+import helpdesk.backend.entities.TicketComentario;
+import helpdesk.backend.repositories.TicketComentarioRepository;
 import helpdesk.backend.entities.Ticket;
 import helpdesk.backend.entities.Usuario;
 import helpdesk.backend.exceptions.ApiException;
@@ -27,6 +30,7 @@ public class TicketService {
 
     private final TicketRepository ticketRepository;
     private final UsuarioRepository usuarioRepository;
+    private final TicketComentarioRepository comentarioRepository;
 
     @Transactional
     public Ticket crearTicket(TicketRequest request, String correoUsuario) {
@@ -101,6 +105,37 @@ public class TicketService {
             ticket.setTecnico(usuarioRepository.findByCorreo(correoTecnico).orElse(null));
         }
         return ticketRepository.save(ticket);
+    }
+
+    // ------------------------------------------------------------------
+    // Comentarios (seguimiento y resolucion)
+    // ------------------------------------------------------------------
+
+    /** Comentarios del ticket. El colaborador solo ve los de sus propios tickets. */
+    @Transactional(readOnly = true)
+    public List<ComentarioDto> comentarios(Integer ticketId, Authentication auth) {
+        obtener(ticketId, auth); // valida acceso (404 si no es suyo)
+        return comentarioRepository.findByTicketIdOrderByFechaAscIdAsc(ticketId)
+                .stream().map(ComentarioDto::de).toList();
+    }
+
+    @Transactional
+    public ComentarioDto comentar(Integer ticketId, String texto, Authentication auth) {
+        Ticket ticket = obtener(ticketId, auth);
+        if (texto == null || texto.isBlank()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El comentario no puede estar vacío");
+        }
+        if (texto.length() > 1000) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El comentario no puede superar 1000 caracteres");
+        }
+        if (Ticket.CERRADO.equals(ticket.getEstado())) {
+            throw new ApiException(HttpStatus.CONFLICT, "El ticket #" + ticketId + " está Cerrado");
+        }
+        TicketComentario c = new TicketComentario();
+        c.setTicket(ticket);
+        c.setAutor(usuarioAutenticado(auth));
+        c.setTexto(texto.trim());
+        return ComentarioDto.de(comentarioRepository.save(c));
     }
 
     private Ticket buscar(Integer id) {

@@ -18,14 +18,20 @@ public record ActaResponse(
         Integer usuarioId,
         String colaborador,
         String tecnico,
-        String archivo,         // nombre del PDF
-        String urlDescarga,     // GET /api/actas/{id}/pdf
-        List<Equipo> equipos
+        String archivo,         // nombre del PDF original
+        String urlDescarga,     // GET /api/actas/{id}/pdf (el firmado si existe)
+        List<Equipo> equipos,
+        String observacion,
+        String firmaNombre,
+        LocalDateTime firmaFecha,
+        String archivoFirmado,
+        String hashPdf
 ) {
-    public record Equipo(Integer activoId, String codigoPatrimonial, String marca, String modelo, String numeroSerie) {}
+    public record Equipo(Integer activoId, String codigoPatrimonial, String categoria,
+                         String marca, String modelo, String numeroSerie) {}
 
     public static ActaResponse de(Acta a, List<ActaDetalle> detalles) {
-        String archivo = a.getUrlPdf() == null ? null : a.getUrlPdf().substring(a.getUrlPdf().lastIndexOf('/') + 1);
+        String archivo = nombreArchivo(a.getUrlPdf());
         return new ActaResponse(
                 a.getId(),
                 ActaPdfGenerator.codigo(a),
@@ -40,6 +46,16 @@ public record ActaResponse(
                 archivo,
                 "/api/actas/" + a.getId() + "/pdf",
                 detalles.stream().map(d -> new Equipo(d.getActivo().getId(), d.getActivo().getCodigoPatrimonial(),
-                        d.getMarca(), d.getModelo(), d.getNumeroSerie())).toList());
+                        d.getActivo().getCategoria().getNombre(),
+                        d.getMarca(), d.getModelo(), d.getNumeroSerie())).toList(),
+                a.getMovimiento().getObservacion(),
+                a.getFirmaNombre(),
+                a.getFirmaFecha(),
+                nombreArchivo(a.getUrlPdfFirmado()),
+                a.getHashPdf());
+    }
+
+    private static String nombreArchivo(String ruta) {
+        return ruta == null ? null : ruta.substring(ruta.lastIndexOf('/') + 1);
     }
 }

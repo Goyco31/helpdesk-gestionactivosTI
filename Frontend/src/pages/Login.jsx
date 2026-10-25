@@ -60,6 +60,7 @@ function Login() {
 
       localStorage.setItem('token', tokenJWT)
       localStorage.setItem('rol', rolDelUsuario)
+      localStorage.setItem('nombre', nombreUsuario)
 
       if (rolDelUsuario === 'Usuario Final') {
         console.log("Redirigiendo a /usuario/mis-solicitudes...");

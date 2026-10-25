@@ -44,6 +44,12 @@ public class ActivoController {
         return ResponseEntity.ok(movimientoService.historialDeActivo(id));
     }
 
+    // RF04: editar datos del activo (el estado cambia solo con un movimiento)
+    @PutMapping("/{id}")
+    public ResponseEntity<ActivoResponse> actualizar(@PathVariable Integer id, @RequestBody ActivoRequest request) {
+        return ResponseEntity.ok(activoService.actualizar(id, request));
+    }
+
     @PostMapping("/registrar")
     public ResponseEntity<ActivoResponse> crear(@RequestBody ActivoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(activoService.crearActivo(request));
