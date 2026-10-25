@@ -41,6 +41,7 @@ import java.util.List;
  *  /api/activos/** (inventario)     |   no    |   no    |   si    |  si
  *  /api/movimientos/**              |   no    |   no    |   si    |  si
  *  GET  /api/usuarios               |   no    |   no    |   si    |  si
+ *  PATCH /api/usuarios/{id}/rol     |   no    |   no    |   no    |  si
  *  GET  /api/catalogos/**           |   no    |   si    |   si    |  si
  *  POST /api/tickets                |   no    |   si    |   si    |  si
  *  GET  /api/tickets, /{id}         |   no    | solo los suyos | todos | todos
