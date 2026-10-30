@@ -1,0 +1,177 @@
+### =====================================================================
+### Pruebas de movimientos y reglas de negocio (Observaciones 10 y 11)
+### Ejecutar con IntelliJ (HTTP Client) o VS Code (extension "REST Client"),
+### EN ORDEN. Tras cada prueba, toma captura de la respuesta y, cuando se
+### indique, de la consulta SQL en DBeaver: esa es la evidencia de que el
+### resultado quedo registrado en PostgreSQL.
+### =====================================================================
+
+@base = http://localhost:8080
+@tokenUsuario = PEGAR_TOKEN_DEL_COLABORADOR_A
+@tokenSoporte = PEGAR_TOKEN_DE_SOPORTE
+# ids reales de tu BD (consulta: SELECT id, nombres, apellidos FROM usuario;)
+@colaboradorA = 3
+@colaboradorB = 4
+
+### ------------------------------------------------------------------
+### Preparacion
+### ------------------------------------------------------------------
+
+### P-01 Soporte registra un activo nuevo -> 201, estado "por asignar"
+POST {{base}}/api/activos/registrar
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "codigoPatrimonial": "TERPEL 1001", "categoria": "Laptop", "marca": "Lenovo", "modelo": "ThinkPad T14", "numeroSerie": "PF-T14-0001",
+  "sede": "San Isidro", "sociedad": "Terpel Perú" }
+
+### P-02 El colaborador A crea su ticket -> 201, estado "Abierto"  (anota el "id" como TICKET_A)
+POST {{base}}/api/tickets
+Authorization: Bearer {{tokenUsuario}}
+Content-Type: application/json
+
+{ "asunto": "Solicito laptop por ingreso", "categoria": "Solicitud de equipo", "prioridad": "Media" }
+
+### (reemplaza estos valores con los ids devueltos)
+@activo = 2
+@ticketA = 1
+
+### ------------------------------------------------------------------
+### Reglas de negocio: casos que DEBEN ser rechazados
+### ------------------------------------------------------------------
+
+### RN-01 Asignar SIN ticket -> 400 "Todo movimiento debe estar vinculado a un ticket"
+POST {{base}}/api/movimientos/asignar
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "activoId": {{activo}}, "usuarioDestinoId": {{colaboradorA}} }
+
+### RN-02 Asignar con un ticket inexistente -> 404 "No existe el ticket #99999"
+POST {{base}}/api/movimientos/asignar
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "activoId": {{activo}}, "ticketId": 99999, "usuarioDestinoId": {{colaboradorA}} }
+
+### RN-03 Asignar con el ticket de A pero a B -> 400 "El ticket #.. pertenece a .., no a .."
+POST {{base}}/api/movimientos/asignar
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "activoId": {{activo}}, "ticketId": {{ticketA}}, "usuarioDestinoId": {{colaboradorB}} }
+
+### RN-04 Devolver un activo que no esta asignado -> 409 "no está asignado a ningún colaborador"
+POST {{base}}/api/movimientos/devolver
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "activoId": {{activo}}, "ticketId": {{ticketA}} }
+
+### RN-05 Un colaborador (rol USUARIO) intenta asignar -> 403
+POST {{base}}/api/movimientos/asignar
+Authorization: Bearer {{tokenUsuario}}
+Content-Type: application/json
+
+{ "activoId": {{activo}}, "ticketId": {{ticketA}}, "usuarioDestinoId": {{colaboradorA}} }
+
+### ------------------------------------------------------------------
+### Flujo correcto
+### ------------------------------------------------------------------
+
+### MV-01 Asignar a A con su ticket -> 201; activo "en uso"; ticket pasa a "En Proceso"
+###       La respuesta incluye "actas": [{ "codigo": "ACT-000001", "tipo": "Entrega", ... }]
+POST {{base}}/api/movimientos/asignar
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "activoId": {{activo}}, "ticketId": {{ticketA}}, "usuarioDestinoId": {{colaboradorA}}, "observacion": "Entrega por ingreso de personal" }
+
+### Evidencia en DBeaver:
+###   SELECT a.codigo_patrimonial, e.nombre estado, u.nombres, u.apellidos
+###     FROM activo a JOIN estado_activo e ON e.id = a.estado_id
+###     LEFT JOIN usuario u ON u.id = a.usuario_actual_id WHERE a.id = <activo>;
+###   SELECT * FROM movimiento ORDER BY id DESC;
+
+### RN-06 Asignar OTRA VEZ el mismo activo -> 409 "su estado es 'en uso' (lo tiene ...)"
+POST {{base}}/api/movimientos/asignar
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "activoId": {{activo}}, "ticketId": {{ticketA}}, "usuarioDestinoId": {{colaboradorA}} }
+
+### MV-02 El colaborador A consulta sus activos (RF03) -> 200 con el equipo asignado
+GET {{base}}/api/activos/mis-activos
+Authorization: Bearer {{tokenUsuario}}
+
+### MV-03 Devolver el activo; queda "en mantenimiento" -> 201
+POST {{base}}/api/movimientos/devolver
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "activoId": {{activo}}, "ticketId": {{ticketA}}, "estadoDestino": "en mantenimiento", "observacion": "Pantalla con rayas" }
+
+### RN-07 Asignar un activo "en mantenimiento" -> 409 (solo se asigna "por asignar")
+POST {{base}}/api/movimientos/asignar
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "activoId": {{activo}}, "ticketId": {{ticketA}}, "usuarioDestinoId": {{colaboradorA}} }
+
+### MV-04 Historial completo del activo (RF09) -> 200: asignacion y devolucion, la mas reciente primero
+GET {{base}}/api/activos/{{activo}}/historial
+Authorization: Bearer {{tokenSoporte}}
+
+### MV-05 Soporte cierra el ticket (RF10) -> 200, fecha_finalizacion registrada
+PATCH {{base}}/api/tickets/{{ticketA}}/estado
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "estado": "Cerrado" }
+
+### RN-08 Movimiento con un ticket Cerrado -> 409 "solo se registran movimientos con tickets Abiertos o En Proceso"
+POST {{base}}/api/movimientos/cambiar-estado
+Authorization: Bearer {{tokenSoporte}}
+Content-Type: application/json
+
+{ "activoId": {{activo}}, "ticketId": {{ticketA}}, "estadoDestino": "por asignar" }
+
+### ------------------------------------------------------------------
+### Historial inalterable (ejecutar en DBeaver, no por la API)
+### ------------------------------------------------------------------
+### RN-09  UPDATE movimiento SET observacion = 'cambiado' WHERE id = 1;
+###        -> ERROR: El historial de movimientos es inalterable: no se permite modificar
+### RN-10  DELETE FROM movimiento WHERE id = 1;
+###        -> ERROR: El historial de movimientos es inalterable: no se permite eliminar
+
+### ------------------------------------------------------------------
+### Actas PDF (RF07) - ejecutar despues de MV-01 y MV-03
+### ------------------------------------------------------------------
+@acta = 1
+
+### AC-01 Soporte lista las actas -> 200: una "Entrega" (MV-01) y una "Devolucion" (MV-03)
+GET {{base}}/api/actas
+Authorization: Bearer {{tokenSoporte}}
+
+### AC-02 Descargar el PDF -> 200, application/pdf
+###       Se guarda en Actas/Actas 2026/10 - Octubre/Hoja de entrega - <Nombre Apellido> - <fecha> - ACT-000001.pdf
+###       (al arrancar, el log muestra la ruta exacta: "Las actas PDF se guardan en: ...")
+GET {{base}}/api/actas/{{acta}}/pdf
+Authorization: Bearer {{tokenSoporte}}
+
+### AC-03 El colaborador A ve solo SUS actas -> 200
+GET {{base}}/api/actas
+Authorization: Bearer {{tokenUsuario}}
+
+### AC-04 Un colaborador intenta descargar el acta de OTRO -> 404 (no se revela que existe)
+###       (usa el token de un colaborador distinto de A)
+GET {{base}}/api/actas/{{acta}}/pdf
+Authorization: Bearer PEGAR_TOKEN_DE_OTRO_COLABORADOR
+
+### AC-05 Tiempo de generacion (RNF03, meta <= 3 s): revisar el log del backend
+###       "Acta ACT-000001 generada en 85 ms (3 KB): Actas 2026/10 - Octubre/..."
+
+### AC-06 Las actas no se borran ni se altera su detalle (en DBeaver):
+###   DELETE FROM acta WHERE id = 1;                       -> ERROR: Las actas no se eliminan
+###   UPDATE acta_detalle SET marca = 'X' WHERE acta_id = 1; -> ERROR: El detalle de las actas es inalterable
+

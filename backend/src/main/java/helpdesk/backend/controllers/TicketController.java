@@ -1,33 +1,63 @@
 package helpdesk.backend.controllers;
 
+import helpdesk.backend.dtos.ComentarioDto;
+import helpdesk.backend.dtos.TicketEstadoRequest;
 import helpdesk.backend.dtos.TicketRequest;
 import helpdesk.backend.entities.Ticket;
 import helpdesk.backend.services.TicketService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/tickets")
+@RequiredArgsConstructor
 public class TicketController {
 
     private final TicketService ticketService;
-    
-    public TicketController(TicketService ticketService) {
-        this.ticketService = ticketService;
+
+    // USUARIO ve solo sus tickets; SOPORTE y ADMIN ven todos
+    @GetMapping
+    public ResponseEntity<List<Ticket>> listar(Authentication auth) {
+        return ResponseEntity.ok(ticketService.listarSegunRol(auth));
     }
 
-    @GetMapping
-    public ResponseEntity<List<Ticket>> listar() {
-        return ResponseEntity.ok(ticketService.listarTodos());
+    @GetMapping("/{id}")
+    public ResponseEntity<Ticket> obtener(@PathVariable Integer id, Authentication auth) {
+        return ResponseEntity.ok(ticketService.obtener(id, auth));
+    }
+
+    // RF10: solo Soporte y Admin cambian el estado del ticket
+    @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SOPORTE')")
+    public ResponseEntity<Ticket> actualizarEstado(@PathVariable Integer id,
+                                                   @RequestBody TicketEstadoRequest request,
+                                                   Authentication auth) {
+        return ResponseEntity.ok(ticketService.actualizarEstado(id, request.estado(), auth.getName()));
+    }
+
+    // Comentarios: Soporte/Admin en cualquier ticket; el colaborador en los suyos
+    @GetMapping("/{id}/comentarios")
+    public ResponseEntity<List<ComentarioDto>> comentarios(@PathVariable Integer id, Authentication auth) {
+        return ResponseEntity.ok(ticketService.comentarios(id, auth));
+    }
+
+    @PostMapping("/{id}/comentarios")
+    public ResponseEntity<ComentarioDto> comentar(@PathVariable Integer id,
+                                                  @RequestBody ComentarioDto.Nuevo request,
+                                                  Authentication auth) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ticketService.comentar(id, request.texto(), auth));
     }
 
     @PostMapping
-    public ResponseEntity<Ticket> crear(@RequestBody TicketRequest request, Principal principal) {
-        // principal.getName() contiene el correo del usuario extraído del JWT
-        Ticket nuevoTicket = ticketService.crearTicket(request, principal.getName());
-        return ResponseEntity.ok(nuevoTicket);
+    public ResponseEntity<Ticket> crear(@RequestBody TicketRequest request, Authentication auth) {
+        // auth.getName() contiene el correo del usuario extraido del JWT
+        Ticket nuevoTicket = ticketService.crearTicket(request, auth.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoTicket);
     }
 }

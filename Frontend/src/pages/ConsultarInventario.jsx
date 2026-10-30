@@ -1,19 +1,25 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import api, { claseEstadoActivo, mensajeError } from '../api/cliente'
 import './ConsultarInventario.css'
 
-const inventario = [
-  { codigo: 'TP-CP-00089', categoria: 'CPU', marca: 'HP EliteDesk 800', sede: 'Lima Central', estado: 'Asignado' },
-  { codigo: 'TP-LT-00231', categoria: 'Laptop', marca: 'Dell Latitude 5440', sede: 'Lima Central', estado: 'Disponible' },
-  { codigo: 'TP-MN-00120', categoria: 'Monitor', marca: 'LG 24ML600', sede: 'Callao', estado: 'Mantenimiento' },
-  { codigo: 'TP-IM-00034', categoria: 'Impresora', marca: 'Epson L3250', sede: 'Arequipa', estado: 'Disponible' },
-  { codigo: 'TP-RT-00018', categoria: 'Router', marca: 'TP-Link AX3000', sede: 'Callao', estado: 'Asignado' },
-]
-
-const filtros = ['Todos', 'Disponible', 'Asignado', 'Mantenimiento', 'Baja']
+const filtros = ['Todos', 'por asignar', 'en uso', 'en préstamo', 'en mantenimiento', 'para donar', 'para baja']
 
 function ConsultarInventario() {
   const [filtro, setFiltro] = useState('Todos')
+  const [inventario, setInventario] = useState([])
+  const [incluirBaja, setIncluirBaja] = useState(false)
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState(null)
 
+  useEffect(() => {
+    // RF04: inventario en tiempo real desde PostgreSQL (los "de baja" se ocultan por defecto)
+    api.get('/api/activos', { params: { incluirBaja } })
+      .then((res) => { setInventario(res.data); setError(null) })
+      .catch((err) => setError(mensajeError(err, 'No se pudo cargar el inventario.')))
+      .finally(() => setCargando(false))
+  }, [incluirBaja])
+
+  const opciones = incluirBaja ? [...filtros, 'de baja'] : filtros
   const filtrados = filtro === 'Todos' ? inventario : inventario.filter((a) => a.estado === filtro)
 
   return (
@@ -22,16 +28,24 @@ function ConsultarInventario() {
       <p className="ci-subtitle"><strong>RF04</strong> — Disponibilidad en tiempo real del inventario tecnológico.</p>
 
       <div className="ci-filtros">
-        {filtros.map((f) => (
+        {opciones.map((f) => (
           <button
             key={f}
             className={`ci-filtro${filtro === f ? ' active' : ''}`}
             onClick={() => setFiltro(f)}
           >
-            {f}
+            {f === 'Todos' ? f : f.charAt(0).toUpperCase() + f.slice(1)}
             {f === 'Todos' && <span className="ci-count">{inventario.length}</span>}
           </button>
         ))}
+        <label style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+          <input
+            type="checkbox"
+            checked={incluirBaja}
+            onChange={(e) => { setIncluirBaja(e.target.checked); setFiltro('Todos') }}
+          />
+          Mostrar dados de baja
+        </label>
       </div>
 
       <div className="ci-card">
@@ -42,22 +56,26 @@ function ConsultarInventario() {
               <th>Categoría</th>
               <th>Marca / Modelo</th>
               <th>Sede</th>
+              <th>Asignado a</th>
               <th>Estado</th>
             </tr>
           </thead>
           <tbody>
             {filtrados.map((a) => (
-              <tr key={a.codigo}>
-                <td className="ci-codigo">{a.codigo}</td>
+              <tr key={a.id}>
+                <td className="ci-codigo">{a.codigoPatrimonial}</td>
                 <td><span className="ci-tag">{a.categoria}</span></td>
-                <td>{a.marca}</td>
-                <td>{a.sede}</td>
-                <td><span className={`ci-badge estado-${a.estado.toLowerCase()}`}>{a.estado}</span></td>
+                <td>{[a.marca, a.modelo].filter(Boolean).join(' ') || '—'}</td>
+                <td>{a.sede || '—'}</td>
+                <td>{a.usuarioActual || '—'}</td>
+                <td><span className={`ci-badge estado-${claseEstadoActivo(a.estado)}`}>{a.estado}</span></td>
               </tr>
             ))}
-            {filtrados.length === 0 && (
-              <tr><td colSpan={5} className="ci-vacio">No hay activos en este estado.</td></tr>
+            {!cargando && !error && filtrados.length === 0 && (
+              <tr><td colSpan={6} className="ci-vacio">No hay activos en este estado.</td></tr>
             )}
+            {cargando && <tr><td colSpan={6} className="ci-vacio">Cargando...</td></tr>}
+            {error && <tr><td colSpan={6} className="ci-vacio">{error}</td></tr>}
           </tbody>
         </table>
       </div>

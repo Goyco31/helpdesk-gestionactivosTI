@@ -1,55 +1,79 @@
 import { useState } from 'react'
 import axios from 'axios'
+import { useCatalogo } from '../api/catalogos'
 import './RegistrarUsuario.css'
 
 function RegistrarUsuario() {
+  // Las opciones vienen de la base de datos (tablas catálogo)
+  const { items: areas } = useCatalogo('areas')
+  const { items: sedes } = useCatalogo('sedes')
+  const { items: sociedades } = useCatalogo('sociedades')
+
   const [formData, setFormData] = useState({
-    nombre: '',
+    nombres: '',
+    apellidos: '',
     correo: '',
     password: '',
     dni: '',
     cargo: '',
     celular: '',
-    area: 'Lima Central' // Valor por defecto para el área/sede
+    area: '',
+    sede: '',
+    sociedad: '',
+    rol: 'usuario'
   })
   const [creado, setCreado] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
+    let { name, value } = e.target
+    // DNI: solo números y como máximo 8 dígitos (también al pegar texto)
+    if (name === 'dni') value = value.replace(/\D/g, '').slice(0, 8)
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     })
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!formData.nombre.trim() || !formData.correo.trim()) return
+    if (!formData.nombres.trim() || !formData.apellidos.trim() || !formData.correo.trim()) return
 
     setLoading(true)
     try {
       const url = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/auth/register`
       
-      // Enviamos el objeto que coincide exactamente con RegisterRequest del backend
-      await axios.post(url, formData)
+      // Solo un administrador puede registrar: se envía su token JWT
+      const token = localStorage.getItem('token')
+      await axios.post(url, formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
 
       setCreado(true)
       
       // Limpiar formulario tras éxito
       setFormData({
-        nombre: '',
+        nombres: '',
+        apellidos: '',
         correo: '',
         password: '',
         dni: '',
         cargo: '',
         celular: '',
-        area: 'Lima Central'
+        area: '',
+        sede: '',
+        sociedad: '',
+        rol: 'usuario'
       })
 
       setTimeout(() => setCreado(false), 3000)
     } catch (error) {
       console.error("Error al registrar el usuario:", error)
-      alert("Hubo un error al registrar el usuario en el servidor. Verifica los datos o si el correo ya existe.")
+      const status = error.response?.status
+      const mensaje = error.response?.data?.mensaje
+      if (status === 401) alert("Tu sesión expiró. Vuelve a iniciar sesión.")
+      else if (status === 403) alert("Solo un administrador puede registrar usuarios.")
+      else alert(mensaje || "Hubo un error al registrar el usuario en el servidor.")
     } finally {
       setLoading(false)
     }
@@ -63,17 +87,30 @@ function RegistrarUsuario() {
 
       <div className="ru-layout">
         <form className="ru-form-card" onSubmit={handleSubmit}>
-          <label>
-            Nombre completo
-            <input
-              type="text"
-              name="nombre"
-              placeholder="Ej. Laura Martínez"
-              value={formData.nombre}
-              onChange={handleChange}
-              required
-            />
-          </label>
+          <div className="ru-row">
+            <label>
+              Nombres
+              <input
+                type="text"
+                name="nombres"
+                placeholder="Ej. Laura Sofía"
+                value={formData.nombres}
+                onChange={handleChange}
+                required
+              />
+            </label>
+            <label>
+              Apellidos
+              <input
+                type="text"
+                name="apellidos"
+                placeholder="Ej. Martínez Rojas"
+                value={formData.apellidos}
+                onChange={handleChange}
+                required
+              />
+            </label>
+          </div>
 
           <div className="ru-row">
             <label>
@@ -92,7 +129,11 @@ function RegistrarUsuario() {
               <input
                 type="text"
                 name="dni"
-                placeholder="Número de documento"
+                placeholder="8 dígitos"
+                inputMode="numeric"
+                maxLength={8}
+                pattern="\d{8}"
+                title="El DNI debe tener exactamente 8 dígitos"
                 value={formData.dni}
                 onChange={handleChange}
                 required
@@ -106,7 +147,8 @@ function RegistrarUsuario() {
               <input
                 type="password"
                 name="password"
-                placeholder="••••••••"
+                placeholder="Mínimo 8 caracteres"
+                minLength={8}
                 value={formData.password}
                 onChange={handleChange}
                 required
@@ -127,10 +169,10 @@ function RegistrarUsuario() {
 
           <div className="ru-row">
             <label>
-              Área / Sede
-              <select name="area" value={formData.area} onChange={handleChange}>
-                <option value="Lima Central">Oficna San Isidro</option>
-                <option value="Callao">Planta Callao</option>
+              Área
+              <select name="area" value={formData.area} onChange={handleChange} required>
+                <option value="" disabled>Selecciona...</option>
+                {areas.map((a) => <option key={a} value={a}>{a}</option>)}
               </select>
             </label>
             <label>
@@ -145,6 +187,32 @@ function RegistrarUsuario() {
               />
             </label>
           </div>
+
+          <div className="ru-row">
+            <label>
+              Sede
+              <select name="sede" value={formData.sede} onChange={handleChange} required>
+                <option value="" disabled>Selecciona...</option>
+                {sedes.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>
+            <label>
+              Sociedad
+              <select name="sociedad" value={formData.sociedad} onChange={handleChange} required>
+                <option value="" disabled>Selecciona...</option>
+                {sociedades.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <label>
+            Rol en el sistema
+            <select name="rol" value={formData.rol} onChange={handleChange}>
+              <option value="usuario">Usuario (colaborador)</option>
+              <option value="soporte">Soporte TI</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </label>
 
           <button type="submit" disabled={loading}>
             {loading ? 'Guardando...' : creado ? 'Usuario creado ✓' : 'Crear usuario'}

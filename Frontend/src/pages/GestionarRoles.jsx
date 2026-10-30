@@ -1,14 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import api, { correoActual, mensajeError } from '../api/cliente'
 import './GestionarRoles.css'
-
-// Datos de prueba — cuando exista el backend, esto será
-// un GET a /api/usuarios con axios.
-const usuariosIniciales = [
-  { id: 1, nombre: 'Jose Fernandez', correo: 'j.fernandez@terpel.com', sede: 'Lima Central', rol: 'Usuario' },
-  { id: 2, nombre: 'María Torres', correo: 'm.torres@terpel.com', sede: 'Callao', rol: 'Soporte' },
-  { id: 3, nombre: 'Diego Cosme', correo: 'd.cosme@terpel.com', sede: 'Arequipa', rol: 'Usuario' },
-  { id: 4, nombre: 'Ana Ramírez', correo: 'a.ramirez@terpel.com', sede: 'Lima Central', rol: 'Admin' },
-]
 
 const permisos = [
   { funcion: 'Crear y consultar tickets', usr: true, sop: true, adm: true },
@@ -19,23 +11,44 @@ const permisos = [
 ]
 
 function iniciales(nombre) {
-  return nombre.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+  return nombre.split(' ').filter(Boolean).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 }
 
 function GestionarRoles() {
-  const [usuarios, setUsuarios] = useState(usuariosIniciales)
+  const [usuarios, setUsuarios] = useState([])
   const [busqueda, setBusqueda] = useState('')
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState(null)
+  const [guardandoId, setGuardandoId] = useState(null)
+  const miCorreo = correoActual()
 
-  function cambiarRol(id, nuevoRol) {
-    // Mientras no hay backend, actualizamos localmente.
-    // Más adelante esto será un PATCH a /api/usuarios/:id con axios.
-    setUsuarios((prev) => prev.map((u) => (u.id === id ? { ...u, rol: nuevoRol } : u)))
+  useEffect(() => {
+    // Usuarios reales registrados en PostgreSQL
+    api.get('/api/usuarios')
+      .then((res) => setUsuarios(res.data))
+      .catch((err) => setError(mensajeError(err, 'No se pudo cargar la lista de usuarios.')))
+      .finally(() => setCargando(false))
+  }, [])
+
+  async function cambiarRol(usuario, nuevoRol) {
+    if (!window.confirm(`¿Cambiar el rol de ${usuario.nombreCompleto} a ${nuevoRol}?`)) return
+    setGuardandoId(usuario.id)
+    try {
+      // HU-14: el backend valida que no sea tu propia cuenta y que quede al menos un admin
+      const { data } = await api.patch(`/api/usuarios/${usuario.id}/rol`, { rol: nuevoRol.toLowerCase() })
+      setUsuarios((prev) => prev.map((u) => (u.id === data.id ? data : u)))
+    } catch (err) {
+      alert(mensajeError(err, 'No se pudo cambiar el rol.'))
+    } finally {
+      setGuardandoId(null)
+    }
   }
 
+  const texto = busqueda.toLowerCase()
   const usuariosFiltrados = usuarios.filter(
     (u) =>
-      u.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      u.correo.toLowerCase().includes(busqueda.toLowerCase())
+      u.nombreCompleto.toLowerCase().includes(texto) ||
+      u.correo.toLowerCase().includes(texto)
   )
 
   return (
@@ -49,7 +62,7 @@ function GestionarRoles() {
           <div className="gr-card-head">
             <div>
               <h3>Usuarios del sistema</h3>
-              <span>{usuarios.length} cuentas registradas</span>
+              <span>{cargando ? 'Cargando...' : `${usuarios.length} cuentas registradas`}</span>
             </div>
             <input
               type="text"
@@ -60,20 +73,33 @@ function GestionarRoles() {
           </div>
 
           <div className="gr-lista">
-            {usuariosFiltrados.map((u) => (
-              <div key={u.id} className="gr-item">
-                <div className="gr-avatar">{iniciales(u.nombre)}</div>
-                <div className="gr-item-info">
-                  <div className="gr-item-nombre">{u.nombre}</div>
-                  <div className="gr-item-correo">{u.correo} · {u.sede}</div>
+            {error && <div className="gr-item-correo">{error}</div>}
+            {!cargando && !error && usuariosFiltrados.length === 0 && (
+              <div className="gr-item-correo">No se encontraron usuarios.</div>
+            )}
+            {usuariosFiltrados.map((u) => {
+              const esYo = miCorreo && u.correo.toLowerCase() === miCorreo.toLowerCase()
+              const detalle = [u.area, u.sede].filter(Boolean).join(' · ')
+              return (
+                <div key={u.id} className="gr-item">
+                  <div className="gr-avatar">{iniciales(u.nombreCompleto)}</div>
+                  <div className="gr-item-info">
+                    <div className="gr-item-nombre">{u.nombreCompleto}{esYo ? ' (tú)' : ''}</div>
+                    <div className="gr-item-correo">{u.correo}{detalle ? ` · ${detalle}` : ''}</div>
+                  </div>
+                  <select
+                    value={u.rol}
+                    onChange={(e) => cambiarRol(u, e.target.value)}
+                    disabled={esYo || guardandoId === u.id}
+                    title={esYo ? 'No puedes cambiar tu propio rol' : ''}
+                  >
+                    <option value="Usuario">Usuario</option>
+                    <option value="Soporte">Soporte</option>
+                    <option value="Admin">Admin</option>
+                  </select>
                 </div>
-                <select value={u.rol} onChange={(e) => cambiarRol(u.id, e.target.value)}>
-                  <option value="Usuario">Usuario</option>
-                  <option value="Soporte">Soporte</option>
-                  <option value="Admin">Admin</option>
-                </select>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 

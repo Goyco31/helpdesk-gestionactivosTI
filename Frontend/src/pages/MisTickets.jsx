@@ -1,33 +1,36 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
+import api, { formatoFecha, mensajeError } from '../api/cliente'
 import './MisTickets.css'
 
-// Datos de prueba — cuando exista el backend, esto será
-// un GET a /api/tickets?usuario=... con axios.
-const ticketsDePrueba = [
-  { id: 'TCK-0231', categoria: 'Equipos', descripcion: 'Laptop no enciende', estado: 'En proceso' },
-  { id: 'TCK-0219', categoria: 'Redes', descripcion: 'Sin acceso a wifi de sede', estado: 'Resuelto' },
-  { id: 'TCK-0198', categoria: 'Equipos', descripcion: 'Solicitud de monitor adicional', estado: 'Cerrado' },
-  { id: 'TCK-0177', categoria: 'Aplicaciones', descripcion: 'Acceso a ERP comercial', estado: 'Cerrado' },
-]
-
 const estadoClase = {
-  'En proceso': 'estado-proceso',
+  'En Proceso': 'estado-proceso',
   'Resuelto': 'estado-resuelto',
   'Cerrado': 'estado-cerrado',
   'Abierto': 'estado-abierto',
 }
 
-const filtros = ['Todos', 'Abierto', 'En proceso', 'Resuelto', 'Cerrado']
+const filtros = ['Todos', 'Abierto', 'En Proceso', 'Resuelto', 'Cerrado']
 
 function MisTickets() {
   const { usuario, rol } = useOutletContext()
   const navigate = useNavigate()
   const [filtro, setFiltro] = useState('Todos')
+  const [tickets, setTickets] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    // RF02: el backend devuelve solo los tickets del usuario autenticado
+    api.get('/api/tickets')
+      .then((res) => setTickets([...res.data].sort((a, b) => b.id - a.id)))
+      .catch((err) => setError(mensajeError(err, 'No se pudieron cargar tus tickets.')))
+      .finally(() => setCargando(false))
+  }, [])
 
   const ticketsFiltrados = filtro === 'Todos'
-    ? ticketsDePrueba
-    : ticketsDePrueba.filter((t) => t.estado === filtro)
+    ? tickets
+    : tickets.filter((t) => t.estado === filtro)
 
   return (
     <div className="mt-wrap">
@@ -52,7 +55,7 @@ function MisTickets() {
             onClick={() => setFiltro(f)}
           >
             {f}
-            {f === 'Todos' && <span className="mt-count">{ticketsDePrueba.length}</span>}
+            {f === 'Todos' && <span className="mt-count">{tickets.length}</span>}
           </button>
         ))}
       </div>
@@ -63,22 +66,26 @@ function MisTickets() {
             <tr>
               <th>Ticket</th>
               <th>Categoría</th>
-              <th>Descripción</th>
+              <th>Asunto</th>
+              <th>Fecha</th>
               <th>Estado</th>
             </tr>
           </thead>
           <tbody>
             {ticketsFiltrados.map((t) => (
               <tr key={t.id}>
-                <td className="mt-id">{t.id}</td>
+                <td className="mt-id">#{t.id}</td>
                 <td><span className="mt-tag">{t.categoria}</span></td>
-                <td>{t.descripcion}</td>
-                <td><span className={`mt-badge ${estadoClase[t.estado]}`}>{t.estado}</span></td>
+                <td title={t.descripcion || ''}>{t.asunto}</td>
+                <td>{formatoFecha(t.fechaCreacion)}</td>
+                <td><span className={`mt-badge ${estadoClase[t.estado] || ''}`}>{t.estado}</span></td>
               </tr>
             ))}
-            {ticketsFiltrados.length === 0 && (
-              <tr><td colSpan={4} className="mt-vacio">No tienes tickets en este estado.</td></tr>
+            {!cargando && !error && ticketsFiltrados.length === 0 && (
+              <tr><td colSpan={5} className="mt-vacio">No tienes tickets en este estado.</td></tr>
             )}
+            {cargando && <tr><td colSpan={5} className="mt-vacio">Cargando...</td></tr>}
+            {error && <tr><td colSpan={5} className="mt-vacio">{error}</td></tr>}
           </tbody>
         </table>
       </div>

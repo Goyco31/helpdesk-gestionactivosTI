@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class TicketRequest {
     private String asunto;
+    private String descripcion;
     private String categoria;
-    private String prioridad; // Ej: Baja, Media, Alta, Crítica
+    private String prioridad; // Baja, Media o Alta (SLA de la seccion 3.3.2)
 }

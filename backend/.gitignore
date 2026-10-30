@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Credenciales locales ###
+.env
+*.env
+!.env.example
+
+### Actas PDF generadas (datos personales: nunca a GitHub) ###
+Actas/

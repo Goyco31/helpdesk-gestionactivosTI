@@ -1,102 +1,115 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import api, { descargarActa, formatoFecha, mensajeError } from '../api/cliente'
 import './GenerarActa.css'
 
-// Dato de prueba — cuando exista el backend, esto vendrá de
-// la última asignación/devolución confirmada (RF07).
-const acta = {
-  id: 'A-1043',
-  colaborador: 'Jose Fernandez — Sede Lima Central',
-  activo: 'HP EliteDesk 800 · TP-CP-00089',
-  ticket: 'TCK-6231',
-  fecha: '31/08/2026',
+const titulo = {
+  Entrega: 'Hoja de entrega de equipo',
+  Devolucion: 'Hoja de devolución de equipo',
+  Prestamo: 'Hoja de préstamo de equipo',
 }
 
+/**
+ * Las actas se generan automaticamente al registrar una asignacion,
+ * devolucion o prestamo (RF07). Esta pantalla muestra las que estan
+ * pendientes de firma y permite revisarlas y descargarlas.
+ */
 function GenerarActa() {
-  const [archivo, setArchivo] = useState(null)
-  const [archivado, setArchivado] = useState(false)
+  const [actas, setActas] = useState([])
+  const [seleccionId, setSeleccionId] = useState(null)
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState(null)
 
-  function handleArchivo(e) {
-    const file = e.target.files?.[0]
-    if (file) setArchivo(file.name)
-  }
+  useEffect(() => {
+    api.get('/api/actas')
+      .then((res) => {
+        const pendientes = res.data.filter((a) => a.estado === 'pendiente_firma')
+        setActas(pendientes)
+        if (pendientes.length) setSeleccionId(pendientes[0].id)
+      })
+      .catch((err) => setError(mensajeError(err, 'No se pudieron cargar las actas.')))
+      .finally(() => setCargando(false))
+  }, [])
 
-  function handleAdjuntar() {
-    if (!archivo) return
-    // Mientras no hay backend, simulamos el archivado.
-    // Más adelante esto será un POST a /api/actas/:id/firmada con axios (RF08).
-    setArchivado(true)
+  const acta = actas.find((a) => a.id === seleccionId)
+  const equipo = acta?.equipos[0]
+
+  async function abrir(descargar) {
+    try {
+      await descargarActa(acta.id, !descargar)
+    } catch (err) {
+      alert(mensajeError(err, 'No se pudo obtener el PDF del acta.'))
+    }
   }
 
   return (
     <div className="ga-wrap">
       <h1>Acta digital de entrega / devolución</h1>
       <p className="ga-subtitle">
-        <strong>RF07 / RF08</strong> — Generación y almacenamiento del acta firmada.
+        <strong>RF07</strong> — Las actas se generan automáticamente al registrar cada movimiento.
       </p>
 
       <div className="ga-layout">
         <div className="ga-card">
           <div className="ga-card-head">
-            <h3>Acta generada — {acta.id}</h3>
-            <span className="ga-badge">Generada</span>
+            <h3>Pendientes de firma</h3>
+            <span className="ga-badge">{actas.length}</span>
           </div>
-
-          <div className="ga-doc">
-            <div className="ga-doc-head">
-              <h4>Acta de entrega de activo</h4>
-              <span>{acta.id}</span>
-            </div>
-            <p><strong>Colaborador:</strong> {acta.colaborador}</p>
-            <p><strong>Activo:</strong> {acta.activo}</p>
-            <p><strong>Ticket asociado:</strong> {acta.ticket}</p>
-            <p><strong>Fecha de entrega:</strong> {acta.fecha}</p>
-
-            <div className="ga-firmas">
-              <div className="ga-firma">
-                <div className="ga-firma-linea" />
-                <span>Firma colaborador</span>
-              </div>
-              <div className="ga-firma">
-                <div className="ga-firma-linea" />
-                <span>Firma soporte TI</span>
-              </div>
-            </div>
-          </div>
-
-          <button type="button" className="ga-descargar" onClick={() => alert('Descargando acta en PDF (simulado)')}>
-            ↓ Descargar PDF
-          </button>
-          <div className="ga-rnf">generación ≤ 3 seg (RNF03)</div>
+          {cargando && <p className="ga-nota">Cargando...</p>}
+          {error && <p className="ga-nota">{error}</p>}
+          {!cargando && !error && actas.length === 0 && (
+            <p className="ga-nota">No hay actas pendientes. Registra una asignación o devolución para generar una.</p>
+          )}
+          {actas.map((a) => (
+            <label key={a.id} className={`ga-dropzone${a.id === seleccionId ? ' active' : ''}`}
+                   style={{ cursor: 'pointer', marginBottom: 8, padding: '10px 12px', alignItems: 'flex-start' }}>
+              <input type="radio" name="acta" hidden checked={a.id === seleccionId} onChange={() => setSeleccionId(a.id)} />
+              <span className="ga-archivo-nombre">{a.codigo} · {titulo[a.tipo]}</span>
+              <span className="ga-dropzone-sub">{a.colaborador} · ticket #{a.ticketId} · {formatoFecha(a.fechaGeneracion, true)}</span>
+            </label>
+          ))}
         </div>
 
         <div className="ga-card">
-          <h3>Adjuntar acta firmada</h3>
+          {acta ? (
+            <>
+              <div className="ga-card-head">
+                <h3>Acta generada — {acta.codigo}</h3>
+                <span className="ga-badge">Pendiente de firma</span>
+              </div>
 
-          <label className="ga-dropzone">
-            <input type="file" accept="application/pdf" onChange={handleArchivo} hidden />
-            <span className="ga-clip">📎</span>
-            {archivo ? (
-              <span className="ga-archivo-nombre">{archivo}</span>
-            ) : (
-              <>
-                <span className="ga-dropzone-link">Arrastra el PDF escaneado aquí</span>
-                <span className="ga-dropzone-sub">o selecciona un archivo</span>
-              </>
-            )}
-          </label>
+              <div className="ga-doc">
+                <div className="ga-doc-head">
+                  <h4>{titulo[acta.tipo]}</h4>
+                  <span>{acta.codigo}</span>
+                </div>
+                <p><strong>Colaborador:</strong> {acta.colaborador}</p>
+                <p><strong>Activo:</strong> {equipo ? `${[equipo.marca, equipo.modelo].filter(Boolean).join(' ')} · ${equipo.codigoPatrimonial}` : '—'}</p>
+                <p><strong>N.° de serie:</strong> {equipo?.numeroSerie || '—'}</p>
+                <p><strong>Ticket asociado:</strong> #{acta.ticketId}</p>
+                <p><strong>Fecha:</strong> {formatoFecha(acta.fechaGeneracion, true)}</p>
+                <p><strong>Registrado por:</strong> {acta.tecnico}</p>
 
-          <button
-            type="button"
-            className="ga-adjuntar"
-            disabled={!archivo}
-            onClick={handleAdjuntar}
-          >
-            {archivado ? 'Archivado ✓' : 'Adjuntar y archivar'}
-          </button>
+                <div className="ga-firmas">
+                  <div className="ga-firma">
+                    <div className="ga-firma-linea" />
+                    <span>Firma colaborador</span>
+                  </div>
+                  <div className="ga-firma">
+                    <div className="ga-firma-linea" />
+                    <span>Firma soporte TI</span>
+                  </div>
+                </div>
+              </div>
 
-          <p className="ga-nota">
-            El archivo quedará asociado de forma permanente al movimiento {acta.id} en el repositorio digital.
-          </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" className="ga-descargar" onClick={() => abrir(false)}>Ver PDF</button>
+                <button type="button" className="ga-descargar" onClick={() => abrir(true)}>↓ Descargar PDF</button>
+              </div>
+              <div className="ga-rnf">archivo: {acta.archivo}</div>
+            </>
+          ) : (
+            <p className="ga-nota">Selecciona un acta para ver su detalle.</p>
+          )}
         </div>
       </div>
     </div>
