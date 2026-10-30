@@ -24,7 +24,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class TicketService {
 
-    private static final Set<String> PRIORIDADES = Set.of("Baja", "Media", "Alta", "Crítica");
+    private static final Set<String> PRIORIDADES = Set.of("Baja", "Media", "Alta");
     private static final Set<String> ESTADOS = Set.of(
             Ticket.ABIERTO, Ticket.EN_PROCESO, Ticket.RESUELTO, Ticket.CERRADO);
 
