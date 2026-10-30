@@ -46,7 +46,7 @@ public class ReporteService {
 
     // Limite de resolucion por prioridad, en horas (seccion 3.3.2 del informe)
     private static final Map<String, Long> SLA_HORAS = Map.of(
-            "Crítica", 4L, "Alta", 8L, "Media", 48L, "Baja", 120L);
+            "Alta", 8L, "Media", 48L, "Baja", 120L);
 
     private final ActivoRepository activoRepository;
     private final MovimientoRepository movimientoRepository;
