@@ -1,8 +1,10 @@
-# Compila el Front-End (React + Vite) y lo publica en Azure Static Web Apps.
+# Compila el Front-End (React + Vite) y lo publica en un App Service Linux (Node)
+# que comparte el plan B1 del backend (sin costo adicional).
 # Requiere en GitHub (Settings > Secrets and variables > Actions):
-#   - Secret   AZURE_STATIC_WEB_APPS_API_TOKEN : token de despliegue del Static Web App
-#   - Variable VITE_API_URL                    : URL publica del backend (https://<app>.azurewebsites.net)
-name: Frontend - Azure Static Web Apps
+#   - Secret   AZURE_FRONTEND_PUBLISH_PROFILE : perfil de publicacion del App Service del Front
+#   - Variable AZURE_FRONTEND_APP_NAME        : nombre del App Service del Front (ej. helpdesk-web-goyco31)
+#   - Variable VITE_API_URL                   : URL publica del backend (https://<api>.azurewebsites.net)
+name: Frontend - Azure App Service
 
 on:
   push:
@@ -39,10 +41,9 @@ jobs:
           npm ci
           npm run build
 
-      - name: Publicar en Azure Static Web Apps
-        uses: Azure/static-web-apps-deploy@v1
+      - name: Publicar en Azure App Service
+        uses: azure/webapps-deploy@v3
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: upload
-          app_location: Frontend/dist
-          skip_app_build: true
+          app-name: ${{ vars.AZURE_FRONTEND_APP_NAME }}
+          publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }}
+          package: Frontend/dist

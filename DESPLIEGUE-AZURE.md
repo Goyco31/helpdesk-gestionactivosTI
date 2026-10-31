@@ -4,7 +4,7 @@
 |---|---|---|
 | Base de datos | Azure Database for PostgreSQL (servidor flexible) | Ya existe |
 | API (Spring Boot) | Azure App Service · Linux · Java 17 (Java SE) | GitHub Actions: `.github/workflows/backend-azure.yml` |
-| Front-End (React) | Azure Static Web Apps (plan Free) | GitHub Actions: `.github/workflows/frontend-azure.yml` |
+| Front-End (React) | Azure App Service · Linux · Node 20 (mismo plan B1 de la API) | GitHub Actions: `.github/workflows/frontend-azure.yml` |
 
 Los dos workflows se ejecutan solos al subir cambios a `creacion-del-frontend-con-el-backend` (o a `main`), y también a mano desde la pestaña **Actions** del repositorio.
 
@@ -64,40 +64,59 @@ El primer arranque de Spring Boot tarda alrededor de un minuto. Si falla: App Se
 
 ---
 
-## 2. Front-End en Azure Static Web Apps
+## 2. Front-End en un App Service (mismo plan de la API)
 
-### 2.1 Crear el Static Web App
-Portal → **Crear un recurso** → **Static Web App**:
+> La suscripción Azure for Students no permite crear Static Web Apps (sus 5 regiones están fuera de las regiones
+> autorizadas). Por eso el Front se publica en un segundo App Service dentro del **mismo plan B1** de la API:
+> no tiene costo adicional y queda en Canada Central.
+
+### 2.1 Crear el App Service del Front
+Portal → **App Services** → **Create → Web App**:
 
 | Campo | Valor |
 |---|---|
+| Grupo de recursos | `rg-helpdesk` |
 | Nombre | p. ej. `helpdesk-web-goyco31` |
-| Plan | **Free** |
-| Origen de la implementación | **Otro** (usamos nuestro propio workflow) |
+| Publicar | **Código** |
+| Pila del entorno de ejecución | **Node 20 LTS** |
+| Sistema operativo | **Linux** |
+| Región | **Canada Central** |
+| Plan de Linux | el **mismo plan** de la API (`ASP-rghelpdesk-…`) |
 
-### 2.2 Conectar GitHub
-1. Static Web App → **Información general** → **Administrar token de implementación** → copiar.
+Pestaña **Implementación**: implementación continua deshabilitada y **autenticación básica habilitada**.
+Pestaña **Supervisión**: Application Insights puede quedar deshabilitado.
+
+### 2.2 Comando de inicio
+App Service del Front → **Configuración → Configuración general** → **Comando de inicio**:
+
+```
+pm2 serve /home/site/wwwroot --no-daemon --spa
+```
+
+`--spa` hace que cualquier ruta de React (p. ej. `/soporte/asignar-activo`) devuelva `index.html`. Guardar.
+
+### 2.3 Conectar GitHub
+1. App Service del Front → **Información general** → **Descargar perfil de publicación**.
 2. GitHub → **Settings → Secrets and variables → Actions**:
-   - **Secret** `AZURE_STATIC_WEB_APPS_API_TOKEN` = el token copiado.
-   - **Variable** `VITE_API_URL` = `https://<tu-app>.azurewebsites.net` (sin `/` al final).
-
-### 2.3 Publicar
-Pestaña **Actions** → *Frontend - Azure Static Web Apps* → **Run workflow**. La URL del sitio aparece en **Información general** del Static Web App (`https://<nombre>.azurestaticapps.net`).
+   - **Secret** `AZURE_FRONTEND_PUBLISH_PROFILE` = contenido del archivo descargado.
+   - **Variable** `AZURE_FRONTEND_APP_NAME` = nombre del App Service del Front.
+   - **Variable** `VITE_API_URL` = URL de la API, p. ej. `https://helpdesk-api-goyco31-xxxx.canadacentral-01.azurewebsites.net` (sin `/` final).
+3. Pestaña **Actions** → *Frontend - Azure App Service* → **Run workflow**.
 
 ### 2.4 Autorizar el Front en la API (CORS)
-App Service → **Variables de entorno** → `CORS_ALLOWED_ORIGINS` =
-`https://<nombre>.azurestaticapps.net,http://localhost:5173` (sin espacios ni `/` final) → **Aplicar** (la app se reinicia sola).
+App Service de la **API** → **Variables de entorno** → `CORS_ALLOWED_ORIGINS` =
+`https://<url-del-front>.azurewebsites.net,http://localhost:5173` (sin espacios ni `/` final) → **Aplicar**.
 
 No actives el CORS del portal de App Service: lo maneja Spring Security.
 
 ---
 
 ## 3. Prueba integrada
-1. Abre la URL del Static Web App e inicia sesión (llega el código 2FA al correo).
+1. Abre la URL del App Service del Front e inicia sesión (llega el código 2FA al correo).
 2. Registra una asignación: el acta se guarda en `/home/actas/Actas AAAA/MM - Mes/` del App Service.
 3. Verifica el movimiento en DBeaver (`SELECT * FROM movimiento ORDER BY id DESC;`).
 
 ## Costos y cuidados
-- Static Web Apps Free: gratis. App Service B1: unos USD 13 al mes (se descuenta del crédito de Azure for Students); F1: gratis con límite de 60 minutos de CPU al día.
-- Si no lo vas a usar por varios días, puedes **Detener** el App Service desde Información general.
+- Plan B1: unos USD 13 al mes (se descuenta del crédito de Azure for Students) y aloja **las dos apps** (API y Front) sin costo extra.
+- Si no lo vas a usar por varios días, puedes **Detener** los App Services desde Información general (el plan sigue cobrando mientras exista).
 - Nunca subas `.env` ni el perfil de publicación al repositorio.
