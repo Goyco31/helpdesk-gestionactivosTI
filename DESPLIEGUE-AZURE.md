@@ -4,7 +4,7 @@
 |---|---|---|
 | Base de datos | Azure Database for PostgreSQL (servidor flexible) | Ya existe |
 | API (Spring Boot) | Azure App Service · Linux · Java 17 (Java SE) | GitHub Actions: `.github/workflows/backend-azure.yml` |
-| Front-End (React) | Azure App Service · Linux · Node 20 (mismo plan B1 de la API) | GitHub Actions: `.github/workflows/frontend-azure.yml` |
+| Front-End (React) | Azure App Service · Linux · Node 22 (mismo plan B1 de la API) | GitHub Actions: `.github/workflows/frontend-azure.yml` |
 
 Los dos workflows se ejecutan solos al subir cambios a `creacion-del-frontend-con-el-backend` (o a `main`), y también a mano desde la pestaña **Actions** del repositorio.
 
@@ -78,7 +78,7 @@ Portal → **App Services** → **Create → Web App**:
 | Grupo de recursos | `rg-helpdesk` |
 | Nombre | p. ej. `helpdesk-web-goyco31` |
 | Publicar | **Código** |
-| Pila del entorno de ejecución | **Node 20 LTS** |
+| Pila del entorno de ejecución | **Node 22 LTS** |
 | Sistema operativo | **Linux** |
 | Región | **Canada Central** |
 | Plan de Linux | el **mismo plan** de la API (`ASP-rghelpdesk-…`) |
