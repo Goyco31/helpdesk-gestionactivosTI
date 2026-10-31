@@ -51,6 +51,8 @@ import java.util.List;
  *  /api/tickets/{id}/comentarios    |   no    | en sus tickets | todos | todos
  *  PUT  /api/activos/{id}           |   no    |   no    |   si    |  si
  *  GET  /api/reportes/resumen       |   no    |   no    |   no    |  si
+ *  GET  /actuator/health            |   si    |   si    |   si    |  si
+ *  /actuator/metrics                |   no    |   no    |   no    |  si
  *
  * Sin token -> 401. Token valido pero rol sin permiso -> 403.
  */
@@ -76,6 +78,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // preflight de CORS
                 .requestMatchers("/api/auth/login", "/api/auth/verify-2fa").permitAll()
                 .requestMatchers("/error").permitAll()
+                // Health check de Azure App Service; el resto de Actuator solo para ADMIN
+                .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
                 // Solo el administrador crea cuentas
                 .requestMatchers("/api/auth/register").hasRole("ADMIN")
                 // RF03: cada usuario consulta sus propios activos (debe ir antes de /api/activos/**)
