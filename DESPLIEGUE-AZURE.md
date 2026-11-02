@@ -6,7 +6,7 @@
 | API (Spring Boot) | Azure App Service · Linux · Java 17 (Java SE) | GitHub Actions: `.github/workflows/backend-azure.yml` |
 | Front-End (React) | Azure App Service · Linux · Node 22 (mismo plan B1 de la API) | GitHub Actions: `.github/workflows/frontend-azure.yml` |
 
-Los dos workflows se ejecutan solos al subir cambios a `creacion-del-frontend-con-el-backend` (o a `main`), y también a mano desde la pestaña **Actions** del repositorio.
+Los dos workflows se ejecutan solos al subir cambios a `main` (la rama estable, que recibe los cambios por pull request desde `creacion-del-frontend-con-el-backend`), y también a mano desde la pestaña **Actions** del repositorio, eligiendo la rama a desplegar.
 
 ---
 
