@@ -1,23 +1,32 @@
 import { useEffect, useState } from 'react'
-import api, { formatoFecha, mensajeError } from '../api/cliente'
+import api, { mensajeError } from '../api/cliente'
+import FechaHora from '../components/FechaHora'
+import { claseCategoria, extraerDetalle, iniciales } from './ticketUtils'
 import './GestionarTicket.css'
 
 const estados = ['Abierto', 'En Proceso', 'Resuelto', 'Cerrado']
-const claseEstado = (e) => `estado-${e.replace(' ', '-').toLowerCase()}`
+const filtros = ['Todos', ...estados]
+
+const claseEstado = {
+  'Abierto': 'gt-e-abierto',
+  'En Proceso': 'gt-e-proceso',
+  'Resuelto': 'gt-e-resuelto',
+  'Cerrado': 'gt-e-cerrado',
+}
 
 function GestionarTicket() {
   const [tickets, setTickets] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
-  const [filtro, setFiltro] = useState('Abierto')
-  const [seleccionadoId, setSeleccionadoId] = useState(null)
+  const [filtro, setFiltro] = useState('Todos')
+  const [detalleId, setDetalleId] = useState(null)
 
   const [comentarios, setComentarios] = useState([])
-  const [nuevoComentario, setNuevoComentario] = useState('')
+  const [comentario, setComentario] = useState('')
   const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
-    // RF10: Soporte ve todos los tickets
+    // RF10: Soporte TI y Administrador ven todos los tickets
     api.get('/api/tickets')
       .then((res) => setTickets([...res.data].sort((a, b) => b.id - a.id)))
       .catch((err) => setError(mensajeError(err, 'No se pudieron cargar los tickets.')))
@@ -25,25 +34,37 @@ function GestionarTicket() {
   }, [])
 
   useEffect(() => {
-    if (!seleccionadoId) return
-    api.get(`/api/tickets/${seleccionadoId}/comentarios`)
+    if (!detalleId) return
+    api.get(`/api/tickets/${detalleId}/comentarios`)
       .then((res) => setComentarios(res.data))
       .catch((err) => alert(mensajeError(err, 'No se pudieron cargar los comentarios.')))
-  }, [seleccionadoId])
+  }, [detalleId])
 
-  const conteos = estados.reduce((acc, e) => {
-    acc[e] = tickets.filter((t) => t.estado === e).length
-    return acc
-  }, {})
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') setDetalleId(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
-  const ticketsFiltrados = tickets.filter((t) => t.estado === filtro)
-  const ticketSeleccionado = tickets.find((t) => t.id === seleccionadoId)
+  const ticketsFiltrados = filtro === 'Todos' ? tickets : tickets.filter((t) => t.estado === filtro)
+  const detalle = tickets.find((t) => t.id === detalleId)
+  const info = detalle ? extraerDetalle(detalle.descripcion) : null
+  const conteo = (f) => (f === 'Todos' ? tickets.length : tickets.filter((t) => t.estado === f).length)
+
+  function abrir(id) {
+    setComentarios([])
+    setComentario('')
+    setDetalleId(id)
+  }
 
   async function cambiarEstado(ticket, nuevoEstado) {
     if (nuevoEstado === ticket.estado) return
     if (nuevoEstado === 'Cerrado' && !window.confirm(`¿Cerrar el ticket #${ticket.id}? Un ticket cerrado ya no puede modificarse.`)) return
     try {
       // Al pasar a Resuelto/Cerrado el backend registra fecha_finalizacion (KPI de SLA y MTTR)
+      // y, si el ticket no tenía técnico, lo asigna a quien hizo el cambio.
       const { data } = await api.patch(`/api/tickets/${ticket.id}/estado`, { estado: nuevoEstado })
       setTickets((prev) => prev.map((t) => (t.id === data.id ? data : t)))
     } catch (err) {
@@ -51,20 +72,13 @@ function GestionarTicket() {
     }
   }
 
-  function seleccionar(t) {
-    setComentarios([])
-    setNuevoComentario('')
-    setSeleccionadoId(t.id)
-  }
-
-  async function guardarComentario(e) {
-    e.preventDefault()
-    if (!nuevoComentario.trim()) return
+  async function publicar() {
+    if (!comentario.trim()) return
     setEnviando(true)
     try {
-      const { data } = await api.post(`/api/tickets/${seleccionadoId}/comentarios`, { texto: nuevoComentario })
+      const { data } = await api.post(`/api/tickets/${detalleId}/comentarios`, { texto: comentario })
       setComentarios((prev) => [...prev, data])
-      setNuevoComentario('')
+      setComentario('')
     } catch (err) {
       alert(mensajeError(err, 'No se pudo guardar el comentario.'))
     } finally {
@@ -76,99 +90,153 @@ function GestionarTicket() {
     <div className="gt-wrap">
       <div className="gt-header">
         <div>
-          <h1>Gestión de tickets — Mesa de ayuda</h1>
-          <p><strong>RF10</strong> — Actualiza el estado y registra comentarios de resolución.</p>
+          <h1>Gestión de tickets</h1>
+          <p>Consulta y atiende las solicitudes registradas por todos los colaboradores.</p>
         </div>
-        <div className="gt-filtros">
-          {estados.map((e) => (
-            <button
-              key={e}
-              className={`gt-filtro${filtro === e ? ' active' : ''}`}
-              onClick={() => setFiltro(e)}
-            >
-              {e} ({conteos[e]})
-            </button>
-          ))}
+        <div className="gt-total">
+          <strong>{tickets.length}</strong>
+          <span>Tickets totales</span>
         </div>
+      </div>
+
+      <div className="gt-filtros">
+        {filtros.map((f) => (
+          <button key={f} className={`gt-filtro${filtro === f ? ' active' : ''}`} onClick={() => setFiltro(f)}>
+            {f} <span className="gt-count">{conteo(f)}</span>
+          </button>
+        ))}
       </div>
 
       <div className="gt-card">
         <table className="gt-table">
           <thead>
             <tr>
-              <th>Ticket</th>
+              <th>N.º de ticket</th>
               <th>Colaborador</th>
-              <th>Asunto</th>
               <th>Categoría</th>
+              <th>Asunto</th>
               <th>Prioridad</th>
-              <th>Creado</th>
               <th>Estado</th>
-              <th>Acción</th>
+              <th>Abierto</th>
+              <th>Cerrado</th>
             </tr>
           </thead>
           <tbody>
             {ticketsFiltrados.map((t) => (
-              <tr
-                key={t.id}
-                className={t.id === seleccionadoId ? 'gt-row-activa' : ''}
-                onClick={() => seleccionar(t)}
-              >
-                <td className="gt-id">#{t.id}</td>
-                <td>{t.usuario?.nombreCompleto}</td>
-                <td>{t.asunto}</td>
-                <td><span className="gt-tag">{t.categoria}</span></td>
-                <td>{t.prioridad}</td>
-                <td>{formatoFecha(t.fechaCreacion, true)}</td>
-                <td><span className={`gt-badge ${claseEstado(t.estado)}`}>{t.estado}</span></td>
-                <td onClick={(e) => e.stopPropagation()}>
-                  <select value={t.estado} onChange={(e) => cambiarEstado(t, e.target.value)} disabled={t.estado === 'Cerrado'}>
-                    {estados.map((e) => <option key={e} value={e}>{e}</option>)}
-                  </select>
+              <tr key={t.id} onClick={() => abrir(t.id)}>
+                <td>
+                  <div className="gt-id">#{t.id}</div>
+                  <div className="gt-ver">Ver detalle →</div>
                 </td>
+                <td>{t.usuario?.nombreCompleto}</td>
+                <td><span className={`gt-tag gt-tag-${claseCategoria(t.categoria)}`}>{t.categoria}</span></td>
+                <td>{t.asunto}</td>
+                <td>{t.prioridad}</td>
+                <td><span className={`gt-badge ${claseEstado[t.estado] || ''}`}>{t.estado}</span></td>
+                <td><FechaHora valor={t.fechaCreacion} clase="gt" /></td>
+                <td><FechaHora valor={t.fechaFinalizacion} clase="gt" /></td>
               </tr>
             ))}
             {!cargando && !error && ticketsFiltrados.length === 0 && (
-              <tr><td colSpan={8} className="gt-vacio">No hay tickets en este estado.</td></tr>
+              <tr className="gt-fila-vacia"><td colSpan={8} className="gt-vacio">No hay tickets en este estado.</td></tr>
             )}
-            {cargando && <tr><td colSpan={8} className="gt-vacio">Cargando...</td></tr>}
-            {error && <tr><td colSpan={8} className="gt-vacio">{error}</td></tr>}
+            {cargando && <tr className="gt-fila-vacia"><td colSpan={8} className="gt-vacio">Cargando...</td></tr>}
+            {error && <tr className="gt-fila-vacia"><td colSpan={8} className="gt-vacio">{error}</td></tr>}
           </tbody>
         </table>
       </div>
 
-      {ticketSeleccionado && (
-        <form className="gt-comentario-card" onSubmit={guardarComentario}>
-          <h4>Ticket #{ticketSeleccionado.id} — {ticketSeleccionado.asunto}</h4>
-          <p className="gt-detalle-desc">{ticketSeleccionado.descripcion || 'Sin descripción.'}</p>
-
-          <h4>Comentarios ({comentarios.length})</h4>
-          <div className="gt-comentarios">
-            {comentarios.length === 0 && <div className="gt-comentario-texto">Aún no hay comentarios.</div>}
-            {comentarios.map((c) => (
-              <div key={c.id} className="gt-comentario">
-                <div className="gt-comentario-autor">{c.autor}<span>{c.rolAutor} · {formatoFecha(c.fecha, true)}</span></div>
-                <div className="gt-comentario-texto">{c.texto}</div>
+      {detalle && (
+        <div className="gt-overlay" onClick={() => setDetalleId(null)}>
+          <div className="gt-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="gt-modal-head">
+              <div>
+                <div className="gt-modal-idrow">
+                  <span className="gt-id">#{detalle.id}</span>
+                  <span className={`gt-badge ${claseEstado[detalle.estado] || ''}`}>{detalle.estado}</span>
+                </div>
+                <h2>{detalle.asunto}</h2>
+                <p className="gt-modal-cat">{detalle.categoria}{info.subcategoria ? ` · ${info.subcategoria}` : ''}</p>
               </div>
-            ))}
-          </div>
+              <button className="gt-cerrar" onClick={() => setDetalleId(null)} aria-label="Cerrar">×</button>
+            </div>
 
-          {ticketSeleccionado.estado !== 'Cerrado' ? (
-            <>
-              <textarea
-                rows={3}
-                maxLength={1000}
-                value={nuevoComentario}
-                onChange={(e) => setNuevoComentario(e.target.value)}
-                placeholder="Describe lo realizado para resolver el ticket..."
-              />
-              <button type="submit" disabled={enviando || !nuevoComentario.trim()}>
-                {enviando ? 'Guardando...' : 'Agregar comentario'}
-              </button>
-            </>
-          ) : (
-            <div className="gt-comentario-texto">El ticket está cerrado; ya no admite comentarios.</div>
-          )}
-        </form>
+            <div className="gt-info">
+              <div><span>Solicitante</span><strong>{detalle.usuario?.nombreCompleto}</strong></div>
+              <div><span>Prioridad</span><strong>{detalle.prioridad}</strong></div>
+              <div><span>Contacto</span><strong>{info.contacto || '—'}</strong></div>
+              <div>
+                <span>Estado</span>
+                <select
+                  value={detalle.estado}
+                  onChange={(e) => cambiarEstado(detalle, e.target.value)}
+                  disabled={detalle.estado === 'Cerrado'}
+                >
+                  {estados.map((e) => <option key={e} value={e}>{e}</option>)}
+                </select>
+              </div>
+              <div className="span2">
+                <span>Atendido por</span>
+                <strong>{detalle.tecnico?.nombreCompleto || 'Sin asignar (se asigna al primer cambio de estado)'}</strong>
+              </div>
+            </div>
+
+            <div className="gt-body">
+              <h3>Actividad y comentarios</h3>
+
+              {detalle.estado !== 'Cerrado' ? (
+                <div className="gt-composer">
+                  <div className="gt-composer-fila">
+                    <textarea
+                      rows={3}
+                      maxLength={1000}
+                      placeholder="Escribe una actualización o comentario para el solicitante..."
+                      value={comentario}
+                      onChange={(e) => setComentario(e.target.value)}
+                    />
+                    <button className="gt-publicar" disabled={enviando || !comentario.trim()} onClick={publicar}>
+                      {enviando ? 'Guardando...' : 'Publicar'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="gt-cerrado-nota">El ticket está cerrado; ya no admite comentarios.</p>
+              )}
+
+              <div className="gt-timeline">
+                {/* Comentarios del más reciente al más antiguo y, al final, la solicitud original */}
+                {[...comentarios].reverse().map((c) => {
+                  const tecnico = c.rolAutor !== 'usuario'
+                  return (
+                    <div key={c.id} className="gt-evento">
+                      <div className={`gt-avatar ${tecnico ? 'tecnico' : ''}`}>{iniciales(c.autor)}</div>
+                      <div className="gt-evento-card">
+                        <div className="gt-evento-head">
+                          <div>
+                            <strong>{c.autor}</strong>
+                            {tecnico && <small>{c.rolAutor === 'admin' ? 'Administrador' : 'Soporte TI'}</small>}
+                          </div>
+                          <span className="gt-evento-fecha"><FechaHora valor={c.fecha} clase="gt" enLinea /></span>
+                        </div>
+                        <p>{c.texto}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+                <div className="gt-evento">
+                  <div className="gt-avatar">{iniciales(detalle.usuario?.nombreCompleto)}</div>
+                  <div className="gt-evento-card">
+                    <div className="gt-evento-head">
+                      <div><strong>{detalle.usuario?.nombreCompleto}</strong><small>Solicitud original</small></div>
+                      <span className="gt-evento-fecha"><FechaHora valor={detalle.fechaCreacion} clase="gt" enLinea /></span>
+                    </div>
+                    <p>{info.texto || 'Sin descripción.'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
