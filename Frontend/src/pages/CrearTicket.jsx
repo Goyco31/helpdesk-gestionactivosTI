@@ -1,17 +1,27 @@
 import { useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import api, { mensajeError } from '../api/cliente'
+import { armarDescripcion } from './ticketUtils'
 import './CrearTicket.css'
 
-const categorias = ['Equipos', 'Aplicaciones', 'Redes']
+// Categorías del sistema (las mismas que usan los reportes y el SLA)
+const subcategorias = {
+  Equipos: ['Computadora', 'Monitor', 'Impresora', 'Periféricos', 'Otro'],
+  Aplicaciones: ['Aplicación corporativa', 'Correo electrónico', 'Accesos y credenciales', 'Sistema operativo', 'Otro'],
+  Redes: ['Conectividad', 'Wifi de sede', 'VPN', 'Telefonía', 'Otro'],
+}
+const categorias = Object.keys(subcategorias)
+const metodosContacto = ['Correo corporativo', 'Teléfono', 'Microsoft Teams']
 const prioridades = ['Baja', 'Media', 'Alta']
-const MAX_DESCRIPCION = 500
+const MAX_TOTAL = 500 // columna descripcion de la tabla ticket
 
 function CrearTicket() {
   const { usuario, rol } = useOutletContext()
   const navigate = useNavigate()
 
   const [categoria, setCategoria] = useState(categorias[0])
+  const [subcategoria, setSubcategoria] = useState(subcategorias[categorias[0]][0])
+  const [metodo, setMetodo] = useState(metodosContacto[0])
   const [prioridad, setPrioridad] = useState('Media')
   const [asunto, setAsunto] = useState('')
   const [descripcion, setDescripcion] = useState('')
@@ -19,8 +29,17 @@ function CrearTicket() {
   const [idTicket, setIdTicket] = useState(null)
   const [enviando, setEnviando] = useState(false)
 
+  // La subcategoría y el contacto viajan al inicio de la descripción, así que restan espacio
+  const maxDescripcion = MAX_TOTAL - armarDescripcion(subcategoria, metodo, '').length
+
+  function elegirCategoria(c) {
+    setCategoria(c)
+    setSubcategoria(subcategorias[c][0])
+  }
+
   function limpiar() {
-    setCategoria(categorias[0])
+    elegirCategoria(categorias[0])
+    setMetodo(metodosContacto[0])
     setPrioridad('Media')
     setAsunto('')
     setDescripcion('')
@@ -32,7 +51,12 @@ function CrearTicket() {
     setEnviando(true)
     try {
       // RF02: se registra en PostgreSQL con estado "Abierto"
-      const { data } = await api.post('/api/tickets', { asunto, descripcion, categoria, prioridad })
+      const { data } = await api.post('/api/tickets', {
+        asunto,
+        categoria,
+        prioridad,
+        descripcion: armarDescripcion(subcategoria, metodo, descripcion.slice(0, maxDescripcion)),
+      })
       setIdTicket(data.id)
       setEnviado(true)
     } catch (error) {
@@ -73,10 +97,34 @@ function CrearTicket() {
       <div className="ct-layout">
         <form className="ct-form-card" onSubmit={handleSubmit}>
           <div className="ct-row">
+            <div className="ct-campo">
+              <span className="ct-label">Categoría</span>
+              <div className="ct-toggle">
+                {categorias.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={categoria === c ? 'active' : ''}
+                    onClick={() => elegirCategoria(c)}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
             <label>
-              Categoría
-              <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-                {categorias.map((c) => <option key={c} value={c}>{c}</option>)}
+              Subcategoría
+              <select value={subcategoria} onChange={(e) => setSubcategoria(e.target.value)}>
+                {subcategorias[categoria].map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="ct-row">
+            <label>
+              Método de contacto
+              <select value={metodo} onChange={(e) => setMetodo(e.target.value)}>
+                {metodosContacto.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </label>
             <label>
@@ -91,6 +139,7 @@ function CrearTicket() {
             Asunto
             <input
               type="text"
+              maxLength={200}
               placeholder="Ej. No puedo acceder a mi correo"
               value={asunto}
               onChange={(e) => setAsunto(e.target.value)}
@@ -102,13 +151,13 @@ function CrearTicket() {
             Descripción
             <textarea
               rows={5}
-              maxLength={MAX_DESCRIPCION}
+              maxLength={maxDescripcion}
               placeholder="Describe el problema, cuándo comenzó y cualquier mensaje de error que hayas visto."
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               required
             />
-            <div className="ct-counter">{descripcion.length}/{MAX_DESCRIPCION}</div>
+            <div className="ct-counter">{Math.min(descripcion.length, maxDescripcion)}/{maxDescripcion}</div>
           </label>
 
           <div className="ct-divider" />

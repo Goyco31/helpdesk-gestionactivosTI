@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { inicioPorRol } from '../api/cliente'
 import './Login.css'
 
 function Login() {
@@ -62,13 +63,8 @@ function Login() {
       localStorage.setItem('rol', rolDelUsuario)
       localStorage.setItem('nombre', nombreUsuario)
 
-      if (rolDelUsuario === 'Usuario Final') {
-        console.log("Redirigiendo a /usuario/mis-solicitudes...");
-        navigate('/usuario/mis-solicitudes', { state: { usuario: nombreUsuario, rol: rolDelUsuario } })
-      } else {
-        console.log("Redirigiendo a /dashboard...");
-        navigate('/dashboard', { state: { usuario: nombreUsuario, rol: rolDelUsuario } })
-      }
+      // Cada rol entra a su panel de inicio
+      navigate(inicioPorRol(rolDelUsuario), { state: { usuario: nombreUsuario, rol: rolDelUsuario } })
 
     } catch (error) {
       console.error("❌ Error atrapado en el catch del 2FA:", error)

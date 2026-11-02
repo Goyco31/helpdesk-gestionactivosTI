@@ -76,10 +76,16 @@ export function sesion() {
   }
 }
 
-/** Pantalla inicial de cada rol. */
+/** Pantalla inicial (panel de inicio) de cada rol. */
 export function inicioPorRol(rol) {
-  if (rol === 'Usuario Final') return '/usuario/mis-solicitudes'
-  return '/dashboard'
+  if (rol === 'Administrador') return '/administrador/inicio'
+  if (rol === 'Soporte TI') return '/soporte/inicio'
+  return '/usuario/inicio'
+}
+
+/** Cuenta los elementos de una lista que cumplen un filtro ("—" si la lista no cargó). */
+export function contar(lista, filtro) {
+  return lista ? lista.filter(filtro).length : '—'
 }
 
 /** Cierra la sesión: borra el token y vuelve al login. */
