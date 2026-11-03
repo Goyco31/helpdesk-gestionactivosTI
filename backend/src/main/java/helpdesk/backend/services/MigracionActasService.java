@@ -69,7 +69,7 @@ public class MigracionActasService {
     public MigracionActasResponse migrar(String hacia) {
         if (!blob.configurado()) {
             throw new ApiException(HttpStatus.BAD_REQUEST,
-                    "Configura AZURE_STORAGE_CONNECTION_STRING en el App Service antes de migrar");
+                    "Blob Storage no está disponible: " + blob.motivoNoConfigurado());
         }
         String destinoTipo = hacia == null ? "" : hacia.trim().toLowerCase(Locale.ROOT);
         ActaStorage origen;

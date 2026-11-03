@@ -22,23 +22,43 @@ public class BlobActaStorage implements ActaStorage {
     private static final Logger log = LoggerFactory.getLogger(BlobActaStorage.class);
     private static final String TIPO_PDF = "application/pdf";
 
-    private final AzureBlobClient cliente; // null = no configurado
+    private final AzureBlobClient cliente; // null = no configurado o mal configurado
+    private final String errorConfiguracion; // por que la cadena de conexion no es valida (null si no hay error)
 
     public BlobActaStorage(@Value("${app.actas.blob.connection-string:}") String cadenaConexion,
                            @Value("${app.actas.blob.contenedor:actas}") String contenedor) {
-        this.cliente = cadenaConexion == null || cadenaConexion.isBlank()
-                ? null
-                : new AzureBlobClient(cadenaConexion, contenedor);
+        AzureBlobClient c = null;
+        String error = null;
+        if (cadenaConexion != null && !cadenaConexion.isBlank()) {
+            try {
+                c = new AzureBlobClient(cadenaConexion, contenedor);
+            } catch (RuntimeException e) {
+                // Una cadena mal copiada NO debe impedir que la API arranque con ACTA_STORAGE=local:
+                // solo se avisa en el log. Con ACTA_STORAGE=blob, ActaStorageActivo detiene el arranque.
+                error = "AZURE_STORAGE_CONNECTION_STRING no es válida: " + e.getMessage();
+                log.error("{}. Blob Storage queda deshabilitado; revisa la variable en el App Service", error);
+            }
+        }
+        this.cliente = c;
+        this.errorConfiguracion = error;
     }
 
     public boolean configurado() {
         return cliente != null;
     }
 
+    /** Motivo por el que Blob no esta disponible, para el mensaje de arranque. */
+    public String motivoNoConfigurado() {
+        return errorConfiguracion != null
+                ? errorConfiguracion
+                : "ACTA_STORAGE=blob requiere la variable AZURE_STORAGE_CONNECTION_STRING";
+    }
+
     public String descripcion() {
-        return configurado()
-                ? "Azure Blob Storage (cuenta " + cliente.getCuenta() + ", contenedor " + cliente.getContenedor() + ")"
-                : "Azure Blob Storage no configurado";
+        if (configurado()) {
+            return "Azure Blob Storage (cuenta " + cliente.getCuenta() + ", contenedor " + cliente.getContenedor() + ")";
+        }
+        return errorConfiguracion != null ? "Azure Blob Storage mal configurado" : "Azure Blob Storage no configurado";
     }
 
     /** Comprueba credenciales y contenedor; se llama al arrancar cuando ACTA_STORAGE=blob. */
