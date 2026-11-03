@@ -111,12 +111,70 @@ No actives el CORS del portal de App Service: lo maneja Spring Security.
 
 ---
 
-## 3. Prueba integrada
+## 3. Actas en Azure Blob Storage (cambio GC-11)
+
+Por defecto la API guarda las actas en `/home/actas` (`ACTA_STORAGE=local`). Este cambio las pasa a un contenedor
+**privado** de Azure Blob Storage. El paso a Blob y la reversión se hacen solo con variables de entorno.
+
+### 3.1 Crear la cuenta de almacenamiento
+Portal → **Cuentas de almacenamiento → Crear**:
+
+| Campo | Valor |
+|---|---|
+| Grupo de recursos | `rg-helpdesk` |
+| Nombre | p. ej. `helpdeskactasgoyco31` (solo minúsculas y números, único en Azure) |
+| Región | **Canada Central** (la misma del App Service) |
+| Rendimiento / Redundancia | Estándar · **LRS** |
+
+- Pestaña **Opciones avanzadas**: **Permitir el acceso anónimo a blobs individuales = Deshabilitado**.
+- Pestaña **Protección de datos**: activar **eliminación temporal de blobs** (7 días) y **control de versiones de blobs**.
+- **Revisar y crear**.
+
+### 3.2 Crear el contenedor
+Cuenta de almacenamiento → **Almacenamiento de datos → Contenedores → + Contenedor**: nombre `actas`,
+nivel de acceso **Privado (sin acceso anónimo)**.
+
+### 3.3 Conectar la API (todavía sin cambiar de almacenamiento)
+1. Cuenta de almacenamiento → **Seguridad y redes → Claves de acceso** → **Mostrar** → copia la **Cadena de conexión** de `key1`.
+2. App Service de la API → **Variables de entorno** → agrega:
+
+| Nombre | Valor |
+|---|---|
+| `AZURE_STORAGE_CONNECTION_STRING` | la cadena copiada (es un **secreto**: nunca en el repositorio ni en capturas) |
+| `ACTAS_CONTAINER` | `actas` |
+| `ACTA_STORAGE` | `local` (se cambia en el paso 3.5) |
+
+3. **Aplicar** y esperar el reinicio. `/actuator/health` debe seguir en `{"status":"UP"}`.
+
+### 3.4 Migrar las actas existentes (ensayo)
+Con un token de **Admin** (pruebas en `backend/pruebas/gc11-actas-blob.http`):
+1. `GET /api/admin/actas/almacenamiento` → `"activo": "local"`, `"blobConfigurado": true`.
+2. `POST /api/admin/actas/migrar?hacia=blob` → copia cada PDF (original y firmado) y compara su SHA-256 en origen,
+   destino y el registrado en la tabla `acta`. Debe terminar con `"correcta": true`.
+   Se puede repetir sin riesgo: nunca borra ni sobrescribe.
+3. Guarda la respuesta JSON: es la evidencia de la migración (E05).
+
+### 3.5 Activar Blob
+1. App Service → `ACTA_STORAGE` = `blob` → **Aplicar**.
+2. En el Log stream debe aparecer: `Almacenamiento de actas activo: Azure Blob Storage (cuenta …, contenedor actas)`.
+   Si falta la cadena de conexión o el contenedor, la API **no arranca** y el mensaje lo indica.
+3. Verificar: `/actuator/health` = UP, generar un acta desde el sistema, descargarla y verla en el contenedor.
+4. Ejecutar otra vez `POST /api/admin/actas/migrar?hacia=blob` para copiar cualquier acta generada durante el cambio.
+
+### 3.6 Revertir
+1. `POST /api/admin/actas/migrar?hacia=local` → copia a `/home/actas` las actas creadas mientras Blob era el principal.
+2. App Service → `ACTA_STORAGE` = `local` → **Aplicar**. La API vuelve a leer y guardar en la carpeta.
+
+---
+
+## 4. Prueba integrada
 1. Abre la URL del App Service del Front e inicia sesión (llega el código 2FA al correo).
-2. Registra una asignación: el acta se guarda en `/home/actas/Actas AAAA/MM - Mes/` del App Service.
+2. Registra una asignación: el acta se guarda en `/home/actas/Actas AAAA/MM - Mes/` del App Service
+   (o en el contenedor `actas` de Blob Storage si `ACTA_STORAGE=blob`).
 3. Verifica el movimiento en DBeaver (`SELECT * FROM movimiento ORDER BY id DESC;`).
 
 ## Costos y cuidados
 - Plan B1: unos USD 13 al mes (se descuenta del crédito de Azure for Students) y aloja **las dos apps** (API y Front) sin costo extra.
 - Si no lo vas a usar por varios días, puedes **Detener** los App Services desde Información general (el plan sigue cobrando mientras exista).
-- Nunca subas `.env` ni el perfil de publicación al repositorio.
+- Blob Storage estándar LRS: centavos de dólar al mes con el volumen actual de actas (PDF de pocos KB).
+- Nunca subas `.env`, el perfil de publicación ni la cadena de conexión de Storage al repositorio.
