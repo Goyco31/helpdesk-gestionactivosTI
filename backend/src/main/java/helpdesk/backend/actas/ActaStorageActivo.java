@@ -39,8 +39,7 @@ public class ActaStorageActivo implements ActaStorage {
             }
             case "blob" -> {
                 if (!blob.configurado()) {
-                    throw new IllegalStateException(
-                            "ACTA_STORAGE=blob requiere la variable AZURE_STORAGE_CONNECTION_STRING");
+                    throw new IllegalStateException(blob.motivoNoConfigurado());
                 }
                 blob.verificarContenedor();
                 this.delegado = blob;

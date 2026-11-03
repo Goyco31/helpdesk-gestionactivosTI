@@ -253,8 +253,13 @@ public class AzureBlobClient {
         if (cadena == null || cadena.isBlank()) {
             throw new IllegalArgumentException("La cadena de conexión de Azure Storage está vacía");
         }
+        String limpia = cadena.trim();
+        // Tolera la cadena pegada entre comillas en el portal
+        if (limpia.length() > 1 && limpia.startsWith("\"") && limpia.endsWith("\"")) {
+            limpia = limpia.substring(1, limpia.length() - 1).trim();
+        }
         Map<String, String> p = new HashMap<>();
-        for (String parte : cadena.trim().split(";")) {
+        for (String parte : limpia.split(";")) {
             int i = parte.indexOf('=');
             if (i > 0) p.put(parte.substring(0, i).trim(), parte.substring(i + 1).trim());
         }
