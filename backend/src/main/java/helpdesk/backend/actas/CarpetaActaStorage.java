@@ -60,6 +60,11 @@ public class CarpetaActaStorage implements ActaStorage {
     }
 
     @Override
+    public boolean existe(String rutaRelativa) {
+        return Files.isRegularFile(resolver(rutaRelativa));
+    }
+
+    @Override
     public void eliminarHuerfano(String rutaRelativa) {
         try {
             Files.deleteIfExists(resolver(rutaRelativa));

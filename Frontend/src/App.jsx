@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard' // <--- Importado aquí
 import UsuarioLayout from './layouts/UsuarioLayout'
+import Inicio from './pages/Inicio'
+import InicioSoporte from './pages/InicioSoporte'
+import InicioAdmin from './pages/InicioAdmin'
 import MisTickets from './pages/MisTickets'
 import CrearTicket from './pages/CrearTicket'
 import FirmarActa from './pages/FirmarActa'
@@ -21,19 +23,27 @@ import HistorialActas from './pages/HistorialActas'
 import MisActivos from './pages/MisActivos'
 import ReasignarActivo from './pages/ReasignarActivo'
 import RutaProtegida from './components/RutaProtegida'
+import { inicioPorRol, sesion } from './api/cliente'
 
 const TI = ['Soporte TI', 'Administrador']
+
+// Lee el rol al momento de entrar (no al cargar la app)
+function IrAInicio() {
+  return <Navigate to={inicioPorRol(sesion().rol)} replace />
+}
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
       
-      {/* Ruta para el panel de tarjetas (Admin / Soporte) */}
-      <Route path="/dashboard" element={<RutaProtegida roles={TI}><Dashboard /></RutaProtegida>} />
+      {/* La antigua pantalla de tarjetas se reemplazó por el panel de inicio de cada rol */}
+      <Route path="/dashboard" element={<RutaProtegida><IrAInicio /></RutaProtegida>} />
 
       {/* Usuario Final: Layout con menú lateral */}
       <Route path="/usuario" element={<RutaProtegida roles={['Usuario Final']}><UsuarioLayout /></RutaProtegida>}>
+        <Route index element={<Navigate to="inicio" replace />} />
+        <Route path="inicio" element={<Inicio />} />
         <Route path="mis-solicitudes" element={<MisTickets />} />
         <Route path="crear-ticket" element={<CrearTicket />} />
         <Route path="mis-activos" element={<MisActivos />} />
@@ -42,6 +52,8 @@ function App() {
 
       {/* Administrador: mismo esquema de Layout con menú lateral */}
       <Route path="/administrador" element={<RutaProtegida roles={['Administrador']}><AdministradorLayout /></RutaProtegida>}>
+        <Route index element={<Navigate to="inicio" replace />} />
+        <Route path="inicio" element={<InicioAdmin />} />
         <Route path="registrar-usuario" element={<RegistrarUsuario />} />
         <Route path="gestionar-roles" element={<GestionarRoles />} />
         <Route path="reportes-inventario" element={<ReportesInventario />} />
@@ -58,6 +70,8 @@ function App() {
 
       {/* Soporte TI: mismo esquema de layout, reutilizando sus pantallas */}
       <Route path="/soporte" element={<RutaProtegida roles={TI}><SoporteLayout /></RutaProtegida>}>
+        <Route index element={<Navigate to="inicio" replace />} />
+        <Route path="inicio" element={<InicioSoporte />} />
         <Route path="gestionar-ticket" element={<GestionarTicket />} />
         <Route path="asignar-activo" element={<AsignarActivo />} />
         <Route path="registrar-devolucion" element={<RegistrarDevolucion />} />
