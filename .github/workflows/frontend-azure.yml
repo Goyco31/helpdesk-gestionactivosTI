@@ -8,7 +8,7 @@ name: Frontend - Azure App Service
 
 on:
   push:
-    branches: [creacion-del-frontend-con-el-backend, main]
+    branches: [main] # solo la rama estable despliega a Azure
     paths: ['Frontend/**', '.github/workflows/frontend-azure.yml']
   workflow_dispatch:
 

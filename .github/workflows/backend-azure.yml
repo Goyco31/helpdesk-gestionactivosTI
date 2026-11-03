@@ -7,7 +7,7 @@ name: Backend - Azure App Service
 
 on:
   push:
-    branches: [creacion-del-frontend-con-el-backend, main]
+    branches: [main] # solo la rama estable despliega a Azure
     paths: ['backend/**', '.github/workflows/backend-azure.yml']
   workflow_dispatch:
 
