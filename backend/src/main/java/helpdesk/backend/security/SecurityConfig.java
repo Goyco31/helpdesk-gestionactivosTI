@@ -83,6 +83,8 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 // Solo el administrador crea cuentas
                 .requestMatchers("/api/auth/register").hasRole("ADMIN")
+                // GC-11: almacenamiento y migracion de actas, solo administracion
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // RF03: cada usuario consulta sus propios activos (debe ir antes de /api/activos/**)
                 .requestMatchers(HttpMethod.GET, "/api/activos/mis-activos").hasAnyRole("ADMIN", "SOPORTE", "USUARIO")
                 // Inventario, movimientos y lista de colaboradores: solo personal de TI
