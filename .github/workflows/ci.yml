@@ -56,6 +56,14 @@ jobs:
           print('| Clase | Prueba | Resultado |\n|---|---|---|')
           print('\n'.join(filas))
           PY
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          t = {'tests': 0, 'failures': 0, 'errors': 0, 'skipped': 0}
+          for f in glob.glob('target/surefire-reports/TEST-*.xml'):
+              r = ET.parse(f).getroot()
+              for k in t: t[k] += int(r.get(k, 0))
+          print(f"::notice title=Pruebas del backend::{t['tests']} pruebas, {t['failures'] + t['errors']} fallidas, {t['skipped']} omitidas")
+          PY
 
       - name: Guardar reportes de pruebas
         if: always()
@@ -93,3 +101,6 @@ jobs:
         env:
           VITE_API_URL: https://api.ejemplo.invalid
         run: npm run build
+
+      - name: Resultado
+        run: echo "::notice title=Frontend::ESLint sin errores y build correcto"
