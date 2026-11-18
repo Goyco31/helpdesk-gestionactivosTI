@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import api, { mensajeError } from '../api/cliente'
 import FechaHora from '../components/FechaHora'
 import { claseCategoria, extraerDetalle, iniciales } from './ticketUtils'
@@ -15,6 +16,8 @@ const claseEstado = {
 }
 
 function GestionarTicket() {
+  const { rol } = useOutletContext() || {}
+  const esAdmin = rol === 'Administrador'
   const [tickets, setTickets] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(null)
@@ -24,6 +27,8 @@ function GestionarTicket() {
   const [comentarios, setComentarios] = useState([])
   const [comentario, setComentario] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [evidencia, setEvidencia] = useState('')
+  const [aprobando, setAprobando] = useState(false)
 
   useEffect(() => {
     // RF10: Soporte TI y Administrador ven todos los tickets
@@ -56,6 +61,7 @@ function GestionarTicket() {
   function abrir(id) {
     setComentarios([])
     setComentario('')
+    setEvidencia('')
     setDetalleId(id)
   }
 
@@ -69,6 +75,23 @@ function GestionarTicket() {
       setTickets((prev) => prev.map((t) => (t.id === data.id ? data : t)))
     } catch (err) {
       alert(mensajeError(err, 'No se pudo cambiar el estado del ticket.'))
+    }
+  }
+
+  // Sección 8.1.4: la Jefatura de TI (Administrador) registra la aprobación de un acceso privilegiado
+  async function aprobar() {
+    if (evidencia.trim().length < 10) return
+    setAprobando(true)
+    try {
+      const { data } = await api.patch(`/api/tickets/${detalleId}/aprobacion`, { evidencia })
+      setTickets((prev) => prev.map((t) => (t.id === data.id ? data : t)))
+      const res = await api.get(`/api/tickets/${detalleId}/comentarios`)
+      setComentarios(res.data)
+      setEvidencia('')
+    } catch (err) {
+      alert(mensajeError(err, 'No se pudo registrar la aprobación.'))
+    } finally {
+      setAprobando(false)
     }
   }
 
@@ -130,7 +153,14 @@ function GestionarTicket() {
                 </td>
                 <td>{t.usuario?.nombreCompleto}</td>
                 <td><span className={`gt-tag gt-tag-${claseCategoria(t.categoria)}`}>{t.categoria}</span></td>
-                <td>{t.asunto}</td>
+                <td>
+                  {t.asunto}
+                  {t.codigoSolicitud && (
+                    <div className={`gt-sol${t.requiereAprobacion && !t.aprobado ? ' pendiente' : ''}`}>
+                      {t.codigoSolicitud}{t.requiereAprobacion && !t.aprobado ? ' · por aprobar' : ''}
+                    </div>
+                  )}
+                </td>
                 <td>{t.prioridad}</td>
                 <td><span className={`gt-badge ${claseEstado[t.estado] || ''}`}>{t.estado}</span></td>
                 <td><FechaHora valor={t.fechaCreacion} clase="gt" /></td>
@@ -156,7 +186,9 @@ function GestionarTicket() {
                   <span className={`gt-badge ${claseEstado[detalle.estado] || ''}`}>{detalle.estado}</span>
                 </div>
                 <h2>{detalle.asunto}</h2>
-                <p className="gt-modal-cat">{detalle.categoria}{info.subcategoria ? ` · ${info.subcategoria}` : ''}</p>
+                <p className="gt-modal-cat">
+                  {detalle.codigoSolicitud ? `${detalle.codigoSolicitud} · ` : ''}{detalle.categoria}{info.subcategoria ? ` · ${info.subcategoria}` : ''}
+                </p>
               </div>
               <button className="gt-cerrar" onClick={() => setDetalleId(null)} aria-label="Cerrar">×</button>
             </div>
@@ -180,6 +212,38 @@ function GestionarTicket() {
                 <strong>{detalle.tecnico?.nombreCompleto || 'Sin asignar (se asigna al primer cambio de estado)'}</strong>
               </div>
             </div>
+
+            {detalle.requiereAprobacion && (
+              detalle.aprobado ? (
+                <div className="gt-aprobacion ok">
+                  <strong>Aprobado por {detalle.aprobadoPor?.nombreCompleto}</strong>
+                  <span>
+                    <FechaHora valor={detalle.fechaAprobacion} clase="gt" enLinea /> · Evidencia: {detalle.evidenciaAprobacion}
+                  </span>
+                </div>
+              ) : (
+                <div className="gt-aprobacion pendiente">
+                  <strong>Acceso privilegiado: pendiente de aprobación</strong>
+                  <span>
+                    No puede pasar a En Proceso, Resuelto ni Cerrado hasta que la Jefatura de TI registre su aprobación.
+                  </span>
+                  {esAdmin && detalle.estado !== 'Cerrado' && (
+                    <div className="gt-aprobacion-form">
+                      <input
+                        type="text"
+                        maxLength={300}
+                        placeholder="Evidencia: asunto y fecha del correo de aprobación"
+                        value={evidencia}
+                        onChange={(e) => setEvidencia(e.target.value)}
+                      />
+                      <button disabled={aprobando || evidencia.trim().length < 10} onClick={aprobar}>
+                        {aprobando ? 'Registrando...' : 'Registrar aprobación'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
 
             <div className="gt-body">
               <h3>Actividad y comentarios</h3>

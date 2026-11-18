@@ -148,7 +148,16 @@ function MisTickets() {
                   <span className={`mt-badge ${estadoClase[detalle.estado] || ''}`}>{detalle.estado}</span>
                 </div>
                 <h2>{detalle.asunto}</h2>
-                <p className="mt-modal-cat">{detalle.categoria}{info.subcategoria ? ` · ${info.subcategoria}` : ''}</p>
+                <p className="mt-modal-cat">
+                  {detalle.codigoSolicitud ? `${detalle.codigoSolicitud} · ` : ''}{detalle.categoria}{info.subcategoria ? ` · ${info.subcategoria}` : ''}
+                </p>
+                {detalle.requiereAprobacion && (
+                  <p className={`mt-aprobacion${detalle.aprobado ? ' ok' : ''}`}>
+                    {detalle.aprobado
+                      ? `Aprobado por la Jefatura de TI (${detalle.aprobadoPor?.nombreCompleto})`
+                      : 'Pendiente de aprobación de la Jefatura de TI'}
+                  </p>
+                )}
               </div>
               <div className="mt-modal-acciones">
                 <button className="mt-cerrar" onClick={() => setDetalleId(null)} aria-label="Cerrar">×</button>

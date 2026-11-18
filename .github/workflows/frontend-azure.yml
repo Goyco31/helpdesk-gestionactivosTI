@@ -8,7 +8,7 @@ name: Frontend - Azure App Service
 
 on:
   push:
-    branches: [creacion-del-frontend-con-el-backend, main]
+    branches: [main] # solo la rama estable despliega a Azure
     paths: ['Frontend/**', '.github/workflows/frontend-azure.yml']
   workflow_dispatch:
 
@@ -23,22 +23,23 @@ jobs:
   build-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Node 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: Frontend/package-lock.json
 
-      - name: Compilar (la URL del backend queda dentro del build)
+      - name: Lint y compilacion (la URL del backend queda dentro del build)
         working-directory: Frontend
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
         run: |
           test -n "$VITE_API_URL" || { echo "Falta la variable VITE_API_URL en GitHub"; exit 1; }
           npm ci
+          npm run lint
           npm run build
 
       - name: Publicar en Azure App Service
