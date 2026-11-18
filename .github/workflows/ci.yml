@@ -1,0 +1,95 @@
+# Validacion previa a la integracion (capitulo IX).
+# Corre en cada pull request y en cada push a las ramas de trabajo. No publica nada:
+# si las pruebas del backend o el lint/build del frontend fallan, el PR queda en rojo
+# y la proteccion de la rama main impide fusionarlo.
+name: CI - Validacion
+
+on:
+  pull_request:
+    branches: [main, creacion-del-frontend-con-el-backend]
+  push:
+    branches: [creacion-del-frontend-con-el-backend]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend - pruebas
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compilar y ejecutar las pruebas
+        run: mvn -B verify
+
+      - name: Resumen de pruebas
+        if: always()
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import glob, xml.etree.ElementTree as ET
+          filas, tot = [], {'tests': 0, 'failures': 0, 'errors': 0, 'skipped': 0}
+          for f in sorted(glob.glob('target/surefire-reports/TEST-*.xml')):
+              r = ET.parse(f).getroot()
+              for k in tot: tot[k] += int(r.get(k, 0))
+              for c in r.iter('testcase'):
+                  estado = 'falló' if c.find('failure') is not None or c.find('error') is not None else (
+                           'omitida' if c.find('skipped') is not None else 'ok')
+                  filas.append(f"| {r.get('name').split('.')[-1]} | {c.get('name')} | {estado} |")
+          print('## Pruebas del backend')
+          print(f"**{tot['tests']} pruebas** · {tot['failures'] + tot['errors']} fallidas · {tot['skipped']} omitidas\n")
+          print('| Clase | Prueba | Resultado |\n|---|---|---|')
+          print('\n'.join(filas))
+          PY
+
+      - name: Guardar reportes de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-pruebas-backend
+          path: backend/target/surefire-reports/
+
+  frontend:
+    name: Frontend - lint y build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: ESLint
+        shell: bash # -eo pipefail: si eslint falla, el paso falla aunque pase por tee
+        run: |
+          npx eslint . -f stylish | tee eslint.txt
+          { echo '## ESLint del frontend'; echo; if [ -s eslint.txt ]; then echo '```'; cat eslint.txt; echo '```'; else echo 'Sin errores ni advertencias.'; fi; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build
+        env:
+          VITE_API_URL: https://api.ejemplo.invalid
+        run: npm run build

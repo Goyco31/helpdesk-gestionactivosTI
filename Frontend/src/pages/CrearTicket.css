@@ -331,3 +331,15 @@
   font-weight: 700;
   margin-bottom: 4px;
 }
+/* Aviso de solicitud que requiere aprobación (SOL-04, SOL-05) */
+.ct-aviso {
+  display: block;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
