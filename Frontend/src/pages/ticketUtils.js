@@ -30,3 +30,17 @@ export function iniciales(nombre) {
     .map((p) => p[0].toUpperCase())
     .join('')
 }
+
+// Catálogo de solicitudes de servicio (sección 8.1); vacío = incidencia
+export const tiposSolicitud = [
+  { codigo: '', nombre: 'Incidencia: algo dejó de funcionar' },
+  { codigo: 'SOL-01', nombre: 'SOL-01 · Consulta de mis activos asignados' },
+  { codigo: 'SOL-02', nombre: 'SOL-02 · Copia de acta o historial de un activo' },
+  { codigo: 'SOL-03', nombre: 'SOL-03 · Acceso a carpeta compartida' },
+  { codigo: 'SOL-04', nombre: 'SOL-04 · Creación de cuenta de SAP' },
+  { codigo: 'SOL-05', nombre: 'SOL-05 · Alta de usuario y rol en el Helpdesk' },
+  { codigo: 'SOL-06', nombre: 'SOL-06 · Acceso a la red WiFi corporativa' },
+]
+
+/** Solicitudes de acceso privilegiado: requieren aprobación de la Jefatura de TI (sección 8.1.4). */
+export const CON_APROBACION = ['SOL-04', 'SOL-05']

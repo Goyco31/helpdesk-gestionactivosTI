@@ -612,3 +612,47 @@
 .gt-cerrado-nota { margin: 0 0 16px; font-size: 14px; color: #64748b; }
 .gt-evento-card p { white-space: pre-wrap; }
 .gt-publicar:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Código del catálogo y control de aprobación (sección 8.1.4) */
+.gt-sol {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eef2f7;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+.gt-sol.pendiente { background: #fef3c7; color: #92400e; }
+.gt-aprobacion {
+  margin: 20px 40px 0;
+  padding: 14px 18px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+.gt-aprobacion strong { font-size: 14px; }
+.gt-aprobacion.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.gt-aprobacion.pendiente { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.gt-aprobacion-form { display: flex; gap: 10px; margin-top: 10px; }
+.gt-aprobacion-form input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+}
+.gt-aprobacion-form button {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #b45309;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gt-aprobacion-form button:disabled { opacity: 0.55; cursor: not-allowed; }

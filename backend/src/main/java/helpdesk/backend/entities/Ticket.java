@@ -14,6 +14,9 @@ public class Ticket {
     public static final String RESUELTO = "Resuelto";
     public static final String CERRADO = "Cerrado";
 
+    /** Solicitudes de acceso privilegiado del catalogo (seccion 8.1.4): exigen aprobacion. */
+    public static final java.util.Set<String> SOLICITUDES_CON_APROBACION = java.util.Set.of("SOL-04", "SOL-05");
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -48,4 +51,29 @@ public class Ticket {
     // Se llena al pasar a Resuelto/Cerrado; base de los KPI de SLA y MTTR
     @Column(name = "fecha_finalizacion")
     private LocalDateTime fechaFinalizacion;
+
+    // Codigo del catalogo de solicitudes (SOL-01 a SOL-06); null en incidencias
+    @Column(name = "codigo_solicitud", length = 6)
+    private String codigoSolicitud;
+
+    // Aprobacion de la Jefatura de TI para accesos privilegiados (SOL-04, SOL-05)
+    @ManyToOne
+    @JoinColumn(name = "aprobado_por_id")
+    private Usuario aprobadoPor;
+
+    @Column(name = "fecha_aprobacion")
+    private LocalDateTime fechaAprobacion;
+
+    @Column(name = "evidencia_aprobacion", length = 300)
+    private String evidenciaAprobacion;
+
+    /** true si es un acceso privilegiado y por tanto necesita aprobacion antes de atenderse. */
+    public boolean isRequiereAprobacion() {
+        return codigoSolicitud != null && SOLICITUDES_CON_APROBACION.contains(codigoSolicitud);
+    }
+
+    /** true si ya tiene la aprobacion registrada (o no la necesita). */
+    public boolean isAprobado() {
+        return !isRequiereAprobacion() || aprobadoPor != null;
+    }
 }

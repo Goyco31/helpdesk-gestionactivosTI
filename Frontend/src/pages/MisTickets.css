@@ -478,3 +478,16 @@
 .mt-composer button:disabled { opacity: 0.55; cursor: not-allowed; }
 .mt-evento-card p { white-space: pre-wrap; }
 .mt-cerrado-nota { margin-top: 20px; font-size: 14px; color: #64748b; }
+
+/* Estado de aprobación de un acceso privilegiado (SOL-04, SOL-05) */
+.mt-aprobacion {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mt-aprobacion.ok { background: #ecfdf5; color: #065f46; }

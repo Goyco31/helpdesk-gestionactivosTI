@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import api, { mensajeError } from '../api/cliente'
-import { armarDescripcion } from './ticketUtils'
+import { CON_APROBACION, armarDescripcion, tiposSolicitud } from './ticketUtils'
 import './CrearTicket.css'
 
 // Categorías del sistema (las mismas que usan los reportes y el SLA)
@@ -15,6 +15,7 @@ const metodosContacto = ['Correo corporativo', 'Teléfono', 'Microsoft Teams']
 const prioridades = ['Baja', 'Media', 'Alta']
 const MAX_TOTAL = 500 // columna descripcion de la tabla ticket
 
+
 function CrearTicket() {
   const { usuario, rol } = useOutletContext()
   const navigate = useNavigate()
@@ -23,6 +24,7 @@ function CrearTicket() {
   const [subcategoria, setSubcategoria] = useState(subcategorias[categorias[0]][0])
   const [metodo, setMetodo] = useState(metodosContacto[0])
   const [prioridad, setPrioridad] = useState('Media')
+  const [codigoSolicitud, setCodigoSolicitud] = useState('')
   const [asunto, setAsunto] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [enviado, setEnviado] = useState(false)
@@ -41,6 +43,7 @@ function CrearTicket() {
     elegirCategoria(categorias[0])
     setMetodo(metodosContacto[0])
     setPrioridad('Media')
+    setCodigoSolicitud('')
     setAsunto('')
     setDescripcion('')
   }
@@ -55,6 +58,7 @@ function CrearTicket() {
         asunto,
         categoria,
         prioridad,
+        codigoSolicitud: codigoSolicitud || null,
         descripcion: armarDescripcion(subcategoria, metodo, descripcion.slice(0, maxDescripcion)),
       })
       setIdTicket(data.id)
@@ -134,6 +138,18 @@ function CrearTicket() {
               </select>
             </label>
           </div>
+
+          <label>
+            Tipo de solicitud
+            <select value={codigoSolicitud} onChange={(e) => setCodigoSolicitud(e.target.value)}>
+              {tiposSolicitud.map((t) => <option key={t.codigo} value={t.codigo}>{t.nombre}</option>)}
+            </select>
+            {CON_APROBACION.includes(codigoSolicitud) && (
+              <span className="ct-aviso">
+                Es un acceso privilegiado: Soporte TI lo atenderá cuando la Jefatura de TI registre su aprobación.
+              </span>
+            )}
+          </label>
 
           <label>
             Asunto
