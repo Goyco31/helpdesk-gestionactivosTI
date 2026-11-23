@@ -1,0 +1,65 @@
+### =====================================================================
+### Pruebas del cambio GC-11: actas PDF en Azure Blob Storage (seccion 8.2.7)
+### Ejecutar con VS Code (extension "REST Client") o IntelliJ (HTTP Client),
+### EN ORDEN, siguiendo DESPLIEGUE-AZURE.md (seccion 3). Captura cada respuesta.
+### =====================================================================
+
+@base = https://helpdesk-api-goyco31-ezgrhwawfxa4bbd9.canadacentral-01.azurewebsites.net
+# Token de un usuario ADMIN (localStorage "token" del navegador). No lo subas al repositorio.
+@tokenAdmin = PEGAR_TOKEN_DE_ADMIN
+@tokenSoporte = PEGAR_TOKEN_DE_SOPORTE
+
+### ------------------------------------------------------------------
+### Paso 3.3 - con ACTA_STORAGE=local y la cadena de conexion configurada
+### ------------------------------------------------------------------
+
+### E01 Estado inicial -> 200: "activo": "local", "blobConfigurado": true, "actasRegistradas": N
+GET {{base}}/api/admin/actas/almacenamiento
+Authorization: Bearer {{tokenAdmin}}
+
+### Seguridad: Soporte no puede migrar -> 403
+POST {{base}}/api/admin/actas/migrar?hacia=blob
+Authorization: Bearer {{tokenSoporte}}
+
+### ------------------------------------------------------------------
+### Paso 3.4 - migracion carpeta -> Blob
+### ------------------------------------------------------------------
+
+### PV04 Migracion -> 200: "correcta": true; cada archivo COPIADA con shaOrigen = shaDestino
+###      Guarda este JSON completo: es la evidencia E05 (listado comparativo SHA-256)
+POST {{base}}/api/admin/actas/migrar?hacia=blob
+Authorization: Bearer {{tokenAdmin}}
+
+### PV04 Repetir -> 200: todos YA_EXISTIA_IGUAL (no duplica ni sobrescribe)
+POST {{base}}/api/admin/actas/migrar?hacia=blob
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------
+### Paso 3.5 - despues de cambiar ACTA_STORAGE=blob y reiniciar
+### ------------------------------------------------------------------
+
+### Estado -> 200: "activo": "blob", "descripcion": "Azure Blob Storage (cuenta ..., contenedor actas)"
+GET {{base}}/api/admin/actas/almacenamiento
+Authorization: Bearer {{tokenAdmin}}
+
+### PV02 / PV05: registra una asignacion o devolucion desde el sistema. En el Log stream:
+###      "Acta ACT-00000X generada en N ms" (N <= 3000) y el PDF aparece en el contenedor "actas"
+### PV03: descarga el acta desde «Historial de actas» (200) y con otro colaborador (404, como AC-04)
+### PV06: descarga un acta firmada antigua: se abre igual y su hash no cambio (ver reporte PV04)
+
+### PV01 Acceso anonimo al contenedor (sin token, en el navegador o aqui) -> 403/404 (no publico)
+GET https://NOMBRE_CUENTA.blob.core.windows.net/actas?restype=container&comp=list
+
+### PV08 Recuperacion: borra un acta de PRUEBA desde el portal (Contenedores -> actas) y
+###      restaurala con "Mostrar blobs eliminados" -> "Recuperar" (eliminacion temporal)
+
+### ------------------------------------------------------------------
+### Paso 3.6 - PV07 reversion (ensayo)
+### ------------------------------------------------------------------
+
+### PV07 Copiar a la carpeta las actas creadas en Blob -> 200: "correcta": true
+POST {{base}}/api/admin/actas/migrar?hacia=local
+Authorization: Bearer {{tokenAdmin}}
+
+### Luego ACTA_STORAGE=local, reiniciar y descargar un acta antigua y una creada en el paso 3.5 (200).
+### Para terminar el cambio, volver a ACTA_STORAGE=blob.

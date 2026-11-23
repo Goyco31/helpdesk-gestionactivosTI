@@ -27,6 +27,8 @@ public class TicketService {
     private static final Set<String> PRIORIDADES = Set.of("Baja", "Media", "Alta");
     private static final Set<String> ESTADOS = Set.of(
             Ticket.ABIERTO, Ticket.EN_PROCESO, Ticket.RESUELTO, Ticket.CERRADO);
+    private static final Set<String> CODIGOS_SOLICITUD = Set.of(
+            "SOL-01", "SOL-02", "SOL-03", "SOL-04", "SOL-05", "SOL-06");
 
     private final TicketRepository ticketRepository;
     private final UsuarioRepository usuarioRepository;
@@ -45,7 +47,14 @@ public class TicketService {
                     "Prioridad no válida. Valores permitidos: " + String.join(", ", PRIORIDADES));
         }
 
+        String codigo = esVacio(request.getCodigoSolicitud()) ? null : request.getCodigoSolicitud().trim().toUpperCase();
+        if (codigo != null && !CODIGOS_SOLICITUD.contains(codigo)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Código de solicitud no válido. Valores permitidos: SOL-01 a SOL-06");
+        }
+
         Ticket nuevoTicket = new Ticket();
+        nuevoTicket.setCodigoSolicitud(codigo);
         nuevoTicket.setUsuario(autor);
         nuevoTicket.setAsunto(request.getAsunto().trim());
         nuevoTicket.setDescripcion(request.getDescripcion() == null || request.getDescripcion().isBlank()
@@ -92,6 +101,12 @@ public class TicketService {
         if (Ticket.CERRADO.equals(ticket.getEstado())) {
             throw new ApiException(HttpStatus.CONFLICT, "El ticket #" + id + " está Cerrado y no puede modificarse");
         }
+        // Control de aprobacion (seccion 8.1.4): un acceso privilegiado no avanza sin aprobacion registrada
+        if (!ticket.isAprobado() && !Ticket.ABIERTO.equals(nuevoEstado)) {
+            throw new ApiException(HttpStatus.CONFLICT, "El ticket #" + id + " es una solicitud de acceso privilegiado ("
+                    + ticket.getCodigoSolicitud() + "): registre la aprobación de la Jefatura de TI antes de pasarlo a "
+                    + nuevoEstado);
+        }
 
         boolean finaliza = Ticket.RESUELTO.equals(nuevoEstado) || Ticket.CERRADO.equals(nuevoEstado);
         if (finaliza && ticket.getFechaFinalizacion() == null) {
@@ -105,6 +120,47 @@ public class TicketService {
             ticket.setTecnico(usuarioRepository.findByCorreo(correoTecnico).orElse(null));
         }
         return ticketRepository.save(ticket);
+    }
+
+    /**
+     * Registra la aprobacion de la Jefatura de TI (rol Administrador) para una solicitud de
+     * acceso privilegiado. Guarda quien aprobo, cuando y la evidencia (ej. correo de aprobacion),
+     * y deja un comentario en el ticket para la trazabilidad.
+     */
+    @Transactional
+    public Ticket registrarAprobacion(Integer id, String evidencia, String correoAprobador) {
+        Ticket ticket = buscar(id);
+        if (!ticket.isRequiereAprobacion()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El ticket #" + id
+                    + " no es una solicitud de acceso privilegiado (SOL-04 o SOL-05); no requiere aprobación");
+        }
+        if (ticket.getAprobadoPor() != null) {
+            throw new ApiException(HttpStatus.CONFLICT, "El ticket #" + id + " ya tiene la aprobación registrada");
+        }
+        if (Ticket.CERRADO.equals(ticket.getEstado())) {
+            throw new ApiException(HttpStatus.CONFLICT, "El ticket #" + id + " está Cerrado");
+        }
+        if (esVacio(evidencia) || evidencia.trim().length() < 10) {
+            throw new ApiException(HttpStatus.BAD_REQUEST,
+                    "Indique la evidencia de la aprobación (por ejemplo, asunto y fecha del correo de la Jefatura de TI)");
+        }
+        if (evidencia.length() > 300) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "La evidencia no puede superar 300 caracteres");
+        }
+        Usuario aprobador = usuarioRepository.findByCorreo(correoAprobador)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado en la base de datos"));
+
+        ticket.setAprobadoPor(aprobador);
+        ticket.setFechaAprobacion(LocalDateTime.now());
+        ticket.setEvidenciaAprobacion(evidencia.trim());
+        Ticket guardado = ticketRepository.save(ticket);
+
+        TicketComentario c = new TicketComentario();
+        c.setTicket(guardado);
+        c.setAutor(aprobador);
+        c.setTexto("Aprobación de la Jefatura de TI registrada. Evidencia: " + evidencia.trim());
+        comentarioRepository.save(c);
+        return guardado;
     }
 
     // ------------------------------------------------------------------

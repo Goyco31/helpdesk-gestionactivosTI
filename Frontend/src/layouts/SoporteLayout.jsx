@@ -3,6 +3,7 @@ import { cerrarSesion, sesion } from '../api/cliente'
 import './SoporteLayout.css'
 
 const navItems = [
+  { to: 'inicio', label: 'Inicio', icon: '⌂' },
   { to: 'gestionar-ticket', label: 'Gestionar ticket', icon: '▤' },
   { to: 'asignar-activo', label: 'Asignar activo', icon: '→' },
   { to: 'registrar-devolucion', label: 'Registrar devolución', icon: '↩' },
@@ -37,8 +38,8 @@ function SoporteLayout() {
         <div className="sl-brand">
           <div className="sl-logo">TI</div>
           <div>
-            <div className="sl-brand-title">HOLA {nombreCapital.split(' ')[0].toUpperCase()}</div>
-            <div className="sl-brand-sub">Bienvenido a Terpel</div>
+            <div className="sl-brand-title">{nombreCapital}</div>
+            <div className="sl-brand-sub">Soporte TI</div>
           </div>
         </div>
 
@@ -55,14 +56,6 @@ function SoporteLayout() {
             </NavLink>
           ))}
         </nav>
-
-        <div className="sl-user">
-          <div className="sl-avatar">{nombreCapital.slice(0, 2).toUpperCase()}</div>
-          <div>
-            <div className="sl-user-name">{nombreCapital}</div>
-            <div className="sl-user-rol">Soporte TI</div>
-          </div>
-        </div>
       </aside>
 
       <div className="sl-main">
